@@ -47,23 +47,39 @@ function toggleAcc(id) {
 }
 
 // ── Force toggle ──────────────────────────────────────
-// Each field or section can be "forced" = include in markup even if empty.
-// Data stored in a Set of field ids.
-const forcedFields = new Set();
+// Logic:
+//   filled field  → included by default, btn shows "+" (green)
+//   empty field   → excluded by default, btn shows "−" (dim)
+//   empty+forced  → included despite empty, btn shows "+" (amber)
+//   filled+excluded → excluded despite content, btn shows "−" (accent/red)
+//
+// excludedFields = user explicitly excluded a filled field
+// forcedFields   = user explicitly forced an empty field
+const excludedFields = new Set();
+const forcedFields   = new Set();
 
 function toggleForce(fieldId, btn) {
-  if (forcedFields.has(fieldId)) {
-    forcedFields.delete(fieldId);
-    btn.setAttribute('data-forced', 'false');
-    btn.textContent = '·';
-    btn.title = 'Dołącz do opisu mimo braku treści';
+  const el    = document.getElementById(fieldId);
+  const value = el ? el.value : '';
+  const filled = !isEmpty(value);
+
+  if (filled) {
+    // filled field: toggle excluded
+    if (excludedFields.has(fieldId)) {
+      excludedFields.delete(fieldId);
+      // back to default: included
+    } else {
+      excludedFields.add(fieldId);
+    }
   } else {
-    forcedFields.add(fieldId);
-    btn.setAttribute('data-forced', 'true');
-    btn.textContent = '+';
-    btn.title = 'Kliknij aby wykluczyć';
+    // empty field: toggle forced
+    if (forcedFields.has(fieldId)) {
+      forcedFields.delete(fieldId);
+    } else {
+      forcedFields.add(fieldId);
+    }
   }
-  update();
+  update(); // update() calls updateForceBtns() internally
 }
 
 // ── isEmpty helper ────────────────────────────────────
@@ -73,8 +89,68 @@ function isEmpty(val) {
 
 // ── should include field/section in markup? ───────────
 function include(fieldId, value) {
-  if (!isEmpty(value)) return true;          // has content → always include
-  return forcedFields.has(fieldId);           // empty but forced → include
+  if (excludedFields.has(fieldId)) return false;   // explicitly excluded
+  if (!isEmpty(value)) return true;                 // filled → include
+  return forcedFields.has(fieldId);                 // empty but forced → include
+}
+
+// ── Update force button states ────────────────────────
+// Called after every update(). Finds all [data-field-id] buttons and
+// sets their visual state based on field content + sets.
+function updateForceBtns() {
+  document.querySelectorAll('[data-field-id]').forEach(btn => {
+    const fieldId = btn.getAttribute('data-field-id');
+    const el      = document.getElementById(fieldId);
+    const value   = el ? el.value : '';
+    const filled  = !isEmpty(value);
+    const excluded = excludedFields.has(fieldId);
+    const forced   = forcedFields.has(fieldId);
+
+    if (filled && !excluded) {
+      // default included state
+      btn.textContent = '+';
+      btn.setAttribute('data-state', 'included');
+      btn.title = 'Pole wypełnione — kliknij aby wykluczyć z opisu';
+    } else if (filled && excluded) {
+      // manually excluded
+      btn.textContent = '−';
+      btn.setAttribute('data-state', 'excluded');
+      btn.title = 'Pole wykluczone — kliknij aby dołączyć';
+    } else if (!filled && forced) {
+      // empty but forced
+      btn.textContent = '+';
+      btn.setAttribute('data-state', 'forced');
+      btn.title = 'Puste pole wymuszone — kliknij aby nie dołączać';
+    } else {
+      // empty, not included
+      btn.textContent = '−';
+      btn.setAttribute('data-state', 'empty');
+      btn.title = 'Pole puste — kliknij aby mimo to dołączyć';
+    }
+  });
+
+  // attachments special case
+  document.querySelectorAll('[data-field-id="attachments"]').forEach(btn => {
+    const hasScreenshot = document.getElementById('has-screenshot')?.checked;
+    const hasLogs       = document.getElementById('has-logs')?.checked;
+    const hasContent    = hasScreenshot || hasLogs;
+    const excluded      = excludedFields.has('attachments');
+    const forced        = forcedFields.has('attachments');
+
+    if (hasContent && !excluded) {
+      btn.textContent = '+'; btn.setAttribute('data-state','included');
+      btn.title = 'Sekcja wypełniona — kliknij aby wykluczyć';
+    } else if (hasContent && excluded) {
+      btn.textContent = '−'; btn.setAttribute('data-state','excluded');
+      btn.title = 'Sekcja wykluczona — kliknij aby dołączyć';
+    } else if (!hasContent && forced) {
+      btn.textContent = '+'; btn.setAttribute('data-state','forced');
+      btn.title = 'Pusta sekcja wymuszona — kliknij aby nie dołączać';
+    } else {
+      btn.textContent = '−'; btn.setAttribute('data-state','empty');
+      btn.title = 'Sekcja pusta — kliknij aby mimo to dołączyć';
+    }
+  });
 }
 
 // ── Update empty-state dimming on inputs ──────────────
@@ -85,12 +161,10 @@ function updateEmptyStates() {
     if (!el) return;
     el.setAttribute('data-empty', isEmpty(el.value) ? 'true' : 'false');
   });
-  const sev = document.getElementById('severity');
-  const rep = document.getElementById('repeatability');
-  const imp = document.getElementById('impact');
-  if (sev) sev.setAttribute('data-empty', isEmpty(sev.value) ? 'true' : 'false');
-  if (rep) rep.setAttribute('data-empty', isEmpty(rep.value) ? 'true' : 'false');
-  if (imp) imp.setAttribute('data-empty', isEmpty(imp.value) ? 'true' : 'false');
+  ['severity','repeatability','impact'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('data-empty', isEmpty(el.value) ? 'true' : 'false');
+  });
 }
 
 // ── Populate selects ───────────────────────────────────
@@ -190,6 +264,7 @@ function getValues() {
 function update() {
   const v = getValues();
   updateEmptyStates();
+  updateForceBtns();
   const st = v.severity ? `[${v.severity.split(' ')[0]}]` : '[S?]';
   const mt = v.module   ? `[${v.module}]` : '[Moduł]';
   const ds = v.description ? v.description.slice(0,50)+(v.description.length>50?'…':'') : 'Opis...';
@@ -214,18 +289,17 @@ function buildMarkup(v) {
     L.push('');
   }
 
-  // Environment — include section if any env field is filled or forced
-  const envFields  = ['ver','branch','env','appVer','browser-os'];
-  const envValues  = [v.ver, v.branch, v.env, v.appVer, v.browserOs];
-  const anyEnvSet  = envValues.some(x => !isEmpty(x));
-  const anyEnvForced = envFields.some(id => forcedFields.has(id));
-  if (anyEnvSet || anyEnvForced) {
+  // Environment — show section if at least one row would appear
+  const envFields = ['ver','branch','env','appVer','browser-os'];
+  const envValues = [v.ver, v.branch, v.env, v.appVer, v.browserOs];
+  const anyEnvIncluded = envFields.some((id, i) => include(id, envValues[i]));
+  if (anyEnvIncluded) {
     L.push('h2. 💻 Environment', '|| Pole || Wartość ||');
-    if (include('ver',        v.ver))      L.push(`| *Version* | ${v.ver      || '—'} |`);
-    if (include('branch',     v.branch))   L.push(`| *Branch*  | ${v.branch   || '—'} |`);
-    if (include('env',        v.env))      L.push(`| *Env*     | ${v.env      || '—'} |`);
-    if (include('appVer',     v.appVer))   L.push(`| *App Ver* | ${v.appVer   || '—'} |`);
-    if (include('browser-os', v.browserOs))L.push(`| *System*  | ${v.browserOs|| '—'} |`);
+    if (include('ver',        v.ver))       L.push(`| *Version* | ${v.ver       || '—'} |`);
+    if (include('branch',     v.branch))    L.push(`| *Branch*  | ${v.branch    || '—'} |`);
+    if (include('env',        v.env))       L.push(`| *Env*     | ${v.env       || '—'} |`);
+    if (include('appVer',     v.appVer))    L.push(`| *App Ver* | ${v.appVer    || '—'} |`);
+    if (include('browser-os', v.browserOs)) L.push(`| *System*  | ${v.browserOs || '—'} |`);
     L.push('');
   }
 
@@ -261,20 +335,17 @@ function buildMarkup(v) {
     L.push('');
   }
 
-  // Metadata — include if any meta field filled or forced
-  const metaFields  = ['severity','repeatability','impact'];
-  const metaValues  = [v.severity, v.repeatability, v.impact];
-  const screenshotHasValue = v.hasScreenshot;
-  const logsHasValue = v.hasLogs;
-  const anyMetaSet  = metaValues.some(x => !isEmpty(x)) || screenshotHasValue || logsHasValue;
-  const anyMetaForced = metaFields.some(id => forcedFields.has(id)) || forcedFields.has('attachments');
-  if (anyMetaSet || anyMetaForced) {
+  // Metadata — include if any meta field would appear
+  const metaFields = ['severity','repeatability','impact'];
+  const metaValues = [v.severity, v.repeatability, v.impact];
+  const anyMetaIncluded = metaFields.some((id, i) => include(id, metaValues[i]))
+    || include('attachments', v.hasScreenshot || v.hasLogs ? 'yes' : '');
+  if (anyMetaIncluded) {
     L.push('h2. 📊 Metadata');
-    if (include('severity',     v.severity))     L.push(`* *Severity:* ${v.severity}`);
-    if (include('repeatability',v.repeatability))L.push(`* *Repeatability:* ${v.repeatability}`);
-    if (include('impact',       v.impact))       L.push(`* *Business Impact:* ${v.impact}`);
-    // attachments — always include if checked, or if forced
-    if (v.hasScreenshot || v.hasLogs || forcedFields.has('attachments')) {
+    if (include('severity',     v.severity))      L.push(`* *Severity:* ${v.severity}`);
+    if (include('repeatability',v.repeatability)) L.push(`* *Repeatability:* ${v.repeatability}`);
+    if (include('impact',       v.impact))        L.push(`* *Business Impact:* ${v.impact}`);
+    if (include('attachments',  v.hasScreenshot || v.hasLogs ? 'yes' : '')) {
       L.push(`* *Screenshots:* ${v.hasScreenshot ? 'TAK ✓' : 'NIE'}`);
       L.push(`* *Logs:* ${v.hasLogs ? 'TAK ✓' : 'NIE'}`);
     }

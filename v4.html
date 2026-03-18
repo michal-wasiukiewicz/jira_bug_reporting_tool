@@ -53,7 +53,7 @@
     <div class="acc open" id="acc-class">
       <div class="acc-head" onclick="toggleAcc('acc-class')">
         <span class="acc-icon">🏷</span> Klasyfikacja
-        <button class="acc-force-btn" data-forced="false" title="Dołącz sekcję mimo braku treści"
+        <button class="acc-force-btn" data-state="empty" data-field-id="severity" title="Dołącz sekcję mimo braku treści"
           onclick="event.stopPropagation();toggleForce('severity',this);toggleForce('repeatability',this);toggleForce('impact',this)">·</button>
         <svg class="acc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
@@ -61,15 +61,15 @@
         <div class="g3">
           <div class="field-row">
             <div class="field"><div class="field-label">Severity</div><select id="severity" onchange="update()"><option value="">—</option></select></div>
-            <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('severity',this)">·</button>
+            <button class="force-btn" data-state="empty" data-field-id="severity" title="Dołącz mimo braku" onclick="toggleForce('severity',this)">·</button>
           </div>
           <div class="field-row">
             <div class="field"><div class="field-label">Powtarzalność</div><select id="repeatability" onchange="update()"><option value="">—</option></select></div>
-            <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('repeatability',this)">·</button>
+            <button class="force-btn" data-state="empty" data-field-id="repeatability" title="Dołącz mimo braku" onclick="toggleForce('repeatability',this)">·</button>
           </div>
           <div class="field-row">
             <div class="field"><div class="field-label">Wpływ</div><select id="impact" onchange="update()"><option value="">—</option></select></div>
-            <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('impact',this)">·</button>
+            <button class="force-btn" data-state="empty" data-field-id="impact" title="Dołącz mimo braku" onclick="toggleForce('impact',this)">·</button>
           </div>
         </div>
       </div>
@@ -87,7 +87,7 @@
             <div class="field-label">Description</div>
             <textarea id="description" rows="4" placeholder="Opisz błąd — co się dzieje i kiedy..." oninput="update()"></textarea>
           </div>
-          <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('description',this)">·</button>
+          <button class="force-btn" data-state="empty" data-field-id="description" title="Dołącz mimo braku" onclick="toggleForce('description',this)">·</button>
         </div>
       </div>
     </div>
@@ -106,27 +106,27 @@
         <div class="api-row">
           <div class="field-row" style="flex:1">
             <div class="field"><div class="field-label">Wersja (ver)</div><input type="text" id="ver" placeholder="1.4.2" oninput="update()"/></div>
-            <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('ver',this)">·</button>
+            <button class="force-btn" data-state="empty" data-field-id="ver" title="Dołącz mimo braku" onclick="toggleForce('ver',this)">·</button>
           </div>
           <button class="btn-api" id="fetch-btn" onclick="fetchVersion()">⟳ API</button>
         </div>
         <div class="g3">
           <div class="field-row">
             <div class="field"><div class="field-label">Branch</div><input type="text" id="branch" placeholder="main" oninput="update()"/></div>
-            <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('branch',this)">·</button>
+            <button class="force-btn" data-state="empty" data-field-id="branch" title="Dołącz mimo braku" onclick="toggleForce('branch',this)">·</button>
           </div>
           <div class="field-row">
             <div class="field"><div class="field-label">Env</div><input type="text" id="env" placeholder="staging" oninput="update()"/></div>
-            <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('env',this)">·</button>
+            <button class="force-btn" data-state="empty" data-field-id="env" title="Dołącz mimo braku" onclick="toggleForce('env',this)">·</button>
           </div>
           <div class="field-row">
             <div class="field"><div class="field-label">App Ver</div><input type="text" id="appVer" placeholder="2.0.1" oninput="update()"/></div>
-            <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('appVer',this)">·</button>
+            <button class="force-btn" data-state="empty" data-field-id="appVer" title="Dołącz mimo braku" onclick="toggleForce('appVer',this)">·</button>
           </div>
         </div>
         <div class="field-row">
           <div class="field"><div class="field-label">Przeglądarka / System</div><input type="text" id="browser-os" oninput="update()"/></div>
-          <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('browser-os',this)">·</button>
+          <button class="force-btn" data-state="empty" data-field-id="browser-os" title="Dołącz mimo braku" onclick="toggleForce('browser-os',this)">·</button>
         </div>
         <div id="api-feedback" class="api-fb"></div>
       </div>
@@ -144,7 +144,7 @@
             <div class="field-label">Każda linia = jeden krok</div>
             <textarea id="steps" rows="5" placeholder="Zaloguj się jako użytkownik testowy&#10;Przejdź do sekcji Płatności&#10;Kliknij 'Nowa płatność'" oninput="update()"></textarea>
           </div>
-          <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('steps',this)">·</button>
+          <button class="force-btn" data-state="empty" data-field-id="steps" title="Dołącz mimo braku" onclick="toggleForce('steps',this)">·</button>
         </div>
       </div>
     </div>
@@ -166,14 +166,14 @@
             </div>
             <textarea id="actual" rows="4" placeholder="Wynik. Zaznacz → kod lub kliknij bez zaznaczenia dla pustego bloku." oninput="update()"></textarea>
           </div>
-          <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('actual',this)">·</button>
+          <button class="force-btn" data-state="empty" data-field-id="actual" title="Dołącz mimo braku" onclick="toggleForce('actual',this)">·</button>
         </div>
         <div class="field-row">
           <div class="field">
             <div class="field-label">✅ Wynik oczekiwany</div>
             <textarea id="expected" rows="3" placeholder="Płatność zostaje zapisana, użytkownik widzi potwierdzenie." oninput="update()"></textarea>
           </div>
-          <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('expected',this)">·</button>
+          <button class="force-btn" data-state="empty" data-field-id="expected" title="Dołącz mimo braku" onclick="toggleForce('expected',this)">·</button>
         </div>
         <div class="field-row">
           <div class="rich-wrap">
@@ -185,16 +185,16 @@
             </div>
             <textarea id="testdata" rows="3" placeholder="Dane testowe." oninput="update()"></textarea>
           </div>
-          <button class="force-btn" data-forced="false" title="Dołącz mimo braku" onclick="toggleForce('testdata',this)">·</button>
+          <button class="force-btn" data-state="empty" data-field-id="testdata" title="Dołącz mimo braku" onclick="toggleForce('testdata',this)">·</button>
         </div>
       </div>
     </div>
 
     <!-- Załączniki -->
-    <div class="acc" id="acc-att">
+    <div class="acc open" id="acc-att">
       <div class="acc-head" onclick="toggleAcc('acc-att')">
         <span class="acc-icon">📎</span> Załączniki
-        <button class="acc-force-btn" data-forced="false" title="Dołącz sekcję mimo braku zaznaczenia"
+        <button class="acc-force-btn" data-state="empty" data-field-id="attachments" title="Dołącz sekcję mimo braku zaznaczenia"
           onclick="event.stopPropagation();toggleForce('attachments',this)">·</button>
         <svg class="acc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
