@@ -197,14 +197,92 @@ function populateSelects() {
   update();
 }
 
-// ── App change → modules (multi-select) ──────────────
+// ── Multiselect dropdown ───────────────────────────────
+// Przechowuje zaznaczone moduły
+let msSelected = [];
+
+function msToggle() {
+  const wrap = document.getElementById('ms-modules');
+  wrap.classList.toggle('open');
+  if (wrap.classList.contains('open')) {
+    // kliknięcie poza — zamknij
+    setTimeout(() => document.addEventListener('click', msClickOutside, { once: true }), 0);
+  }
+}
+
+function msClickOutside(e) {
+  const wrap = document.getElementById('ms-modules');
+  if (wrap && !wrap.contains(e.target)) {
+    wrap.classList.remove('open');
+  }
+}
+
+function msKeydown(e) {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); msToggle(); }
+  if (e.key === 'Escape') document.getElementById('ms-modules').classList.remove('open');
+}
+
+function msRebuild(modules) {
+  // Wyczyść zaznaczenie jeśli moduły się zmieniły
+  msSelected = [];
+  const dropdown = document.getElementById('ms-dropdown');
+  dropdown.innerHTML = '';
+  modules.forEach(m => {
+    const opt = document.createElement('div');
+    opt.className = 'ms-option';
+    opt.textContent = m;
+    opt.dataset.value = m;
+    opt.addEventListener('click', (e) => { e.stopPropagation(); msSelectOption(m); });
+    dropdown.appendChild(opt);
+  });
+  msRenderTrigger();
+  update();
+}
+
+function msSelectOption(value) {
+  if (msSelected.includes(value)) {
+    msSelected = msSelected.filter(v => v !== value);
+  } else {
+    msSelected.push(value);
+  }
+  msRenderTrigger();
+  msRenderDropdown();
+  update();
+}
+
+function msRemoveTag(value, e) {
+  e.stopPropagation();
+  msSelected = msSelected.filter(v => v !== value);
+  msRenderTrigger();
+  msRenderDropdown();
+  update();
+}
+
+function msRenderTrigger() {
+  const trigger = document.getElementById('ms-trigger');
+  if (msSelected.length === 0) {
+    trigger.innerHTML = '<span class="ms-placeholder">— wybierz —</span>';
+  } else {
+    trigger.innerHTML = msSelected.map(v =>
+      `<span class="ms-tag">${v}<span class="ms-remove" onclick="msRemoveTag('${v.replace(/'/g,"\\'")}',event)">×</span></span>`
+    ).join('');
+  }
+}
+
+function msRenderDropdown() {
+  document.querySelectorAll('#ms-dropdown .ms-option').forEach(opt => {
+    opt.classList.toggle('selected', msSelected.includes(opt.dataset.value));
+  });
+}
+
+// ── App change → moduły ───────────────────────────────
 function onAppChange() {
   const appId = document.getElementById('app-select').value;
-  const mod   = document.getElementById('module-select');
-  mod.innerHTML = '';
   if (appId) {
     const app = CONFIG.apps.find(a => a.id === appId);
-    if (app) app.modules.forEach(m => mod.appendChild(new Option(m, m)));
+    msRebuild(app ? app.modules : []);
+  } else {
+    msRebuild([]);
   }
   update();
 }
@@ -256,7 +334,7 @@ function getValues() {
     repeatability: document.getElementById('repeatability').value,
     impact:        document.getElementById('impact').value,
     description:   document.getElementById('description').value.trim(),
-    module: Array.from(document.getElementById('module-select').selectedOptions).map(o => o.value),
+    module: [...msSelected],
     ver:           document.getElementById('ver').value.trim(),
     branch:        document.getElementById('branch').value.trim(),
     env:           document.getElementById('env').value.trim(),

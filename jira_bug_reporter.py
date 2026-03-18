@@ -91,16 +91,23 @@ def set_dark_mode():
 # ── API proxy ──────────────────────────────────────────────────────────────────
 @app.route("/api/version/<app_id>", methods=["GET"])
 def get_version(app_id):
-    cfg = load_config()
+    cfg     = load_config()
     app_map = {a["id"]: a["api_url"] for a in cfg["apps"]}
 
     if app_id not in app_map:
         return jsonify({"error": f"Nieznana aplikacja: '{app_id}'. Dostępne: {list(app_map)}"}), 404
 
-    url = app_map[app_id]
-    print(f"[proxy] GET {url}")
+    url        = app_map[app_id]
+    ssl_verify = cfg.get("ssl_verify", True)   # domyślnie weryfikuj SSL
+
+    if not ssl_verify:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        print(f"[proxy] WARN: ssl_verify=false — certyfikat SSL nie jest weryfikowany")
+
+    print(f"[proxy] GET {url}  (ssl_verify={ssl_verify})")
     try:
-        r = req_lib.get(url, timeout=5)
+        r = req_lib.get(url, timeout=5, verify=ssl_verify)
         r.raise_for_status()
         d = r.json()
         result = {
@@ -111,6 +118,10 @@ def get_version(app_id):
         }
         print(f"[proxy] OK → {result}")
         return jsonify(result)
+    except req_lib.exceptions.SSLError as e:
+        msg = f"Błąd SSL: {e}. Ustaw \"ssl_verify\": false w config.json aby pominąć weryfikację."
+        print(f"[proxy] SSL ERROR: {msg}")
+        return jsonify({"error": msg}), 502
     except req_lib.exceptions.ConnectionError as e:
         msg = f"Nie można połączyć: {url}"
         print(f"[proxy] ERROR: {msg} ({e})")

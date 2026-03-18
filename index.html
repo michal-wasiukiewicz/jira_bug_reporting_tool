@@ -122,8 +122,13 @@
         <div class="g2">
           <div class="field"><div class="field-label">Aplikacja</div><select id="app-select" onchange="onAppChange()"><option value="">—</option></select></div>
           <div class="field">
-            <div class="field-label">Moduły <span style="font-size:9px;opacity:.6;text-transform:none;letter-spacing:0">(Ctrl/Cmd = multi)</span></div>
-            <select id="module-select" multiple onchange="update()" style="min-height:72px"></select>
+            <div class="field-label">Moduły</div>
+            <div class="ms-wrap" id="ms-modules">
+              <div class="ms-trigger" id="ms-trigger" tabindex="0" onclick="msToggle()" onkeydown="msKeydown(event)">
+                <span class="ms-placeholder">— wybierz —</span>
+              </div>
+              <div class="ms-dropdown" id="ms-dropdown"></div>
+            </div>
           </div>
         </div>
         <div class="api-row">
