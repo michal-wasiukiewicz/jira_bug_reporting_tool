@@ -276,7 +276,7 @@ def set_dark_mode():
     print(f"[config] dark_mode → {cfg['dark_mode']}")
     return jsonify({"ok": True, "dark_mode": cfg["dark_mode"]})
 
-# ── API proxy ──────────────────────────────────────────────────────────────────
+# ── API version endpoint ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 @app.route("/api/version/<app_id>", methods=["GET"])
 def get_version(app_id):
     _sync_security()
@@ -307,7 +307,7 @@ def get_version(app_id):
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     h_log = [k for k in headers if k != "Accept"]
-    print(f"[proxy] GET {url}  ssl={ssl_verify}"
+    print(f"[api] GET {url}  ssl={ssl_verify}"
           + (f"  headers={h_log}" if h_log else ""))
 
     try:
@@ -320,21 +320,21 @@ def get_version(app_id):
             "env":    d.get("env",    d.get("environment", "")),
             "appVer": d.get("appVer", d.get("app_version", "")),
         }
-        print(f"[proxy] OK → {result}")
+        print(f"[api] OK → {result}")
         return jsonify(result)
     except req_lib.exceptions.SSLError as e:
         msg = f"Błąd SSL: {e}. Ustaw ssl_verify: false w config.json."
-        print(f"[proxy] SSL ERROR: {msg}")
+        print(f"[api] SSL ERROR: {msg}")
         return jsonify({"error": msg}), 502
     except req_lib.exceptions.ConnectionError as e:
-        print(f"[proxy] CONNECTION ERROR: {e}")
+        print(f"[api] CONNECTION ERROR: {e}")
         return jsonify({"error": f"Nie można połączyć: {url}"}), 502
     except req_lib.exceptions.Timeout:
         return jsonify({"error": f"Timeout (5s): {url}"}), 504
     except req_lib.exceptions.HTTPError as e:
         return jsonify({"error": f"HTTP {e.response.status_code}: {url}"}), 502
     except Exception as e:
-        print(f"[proxy] EXCEPTION: {e}")
+        print(f"[api] EXCEPTION: {e}")
         return jsonify({"error": str(e)}), 500
 
 # ── Save report ────────────────────────────────────────────────────────────────

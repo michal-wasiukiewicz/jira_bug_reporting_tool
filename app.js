@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 //  Konfiguracja ładowana z serwera (/config)
-//  Uruchom: python proxy.py  →  http://localhost:5000
+//  Uruchom: python jira_bug_reporter.py  →  http://localhost:5000
 // ═══════════════════════════════════════════════════════
-const PROXY_BASE = '';   // pusty = ten sam origin (serwer proxy serwuje pliki)
+const SERVER_BASE = '';   // pusty = ten sam origin (serwer serwuje pliki)
 let CONFIG = null;
 
 async function loadConfig() {
@@ -287,20 +287,20 @@ function onAppChange() {
   update();
 }
 
-// ── Proxy check ────────────────────────────────────────
+// ── App status check ──────────────────────────────────
 async function checkProxy() {
   const dot   = document.getElementById('proxy-dot');
   const label = document.getElementById('proxy-label');
   try {
-    const r = await fetch(`${PROXY_BASE}/health`, { signal: AbortSignal.timeout(2000) });
+    const r = await fetch(`${SERVER_BASE}/health`, { signal: AbortSignal.timeout(2000) });
     if (r.ok) {
       dot.className = (dot.className.includes('status-dot') ? 'status-dot' : 'dot') + ' online';
-      if (label) label.textContent = `proxy :${CONFIG.proxy.port}`;
+      if (label) label.textContent = `app status | ${CONFIG.proxy.port}`;
       return;
     }
   } catch {}
   dot.className = (dot.className.includes('status-dot') ? 'status-dot' : 'dot') + ' error';
-  if (label) label.textContent = 'proxy offline';
+  if (label) label.textContent = 'app offline';
 }
 
 // ── API fetch ──────────────────────────────────────────
@@ -312,7 +312,7 @@ async function fetchVersion() {
   btn.textContent = '⟳'; btn.classList.add('loading');
   if (fb) fb.className = fb.className.replace(/\b(success|error|ok|err)\b/g, '');
   try {
-    const r = await fetch(`${PROXY_BASE}/api/version/${appId}`, { signal: AbortSignal.timeout(6000) });
+    const r = await fetch(`${SERVER_BASE}/api/version/${appId}`, { signal: AbortSignal.timeout(6000) });
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
     document.getElementById('ver').value    = d.ver    || '';
