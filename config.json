@@ -3,6 +3,7 @@
     "host": "localhost",
     "port": 5000
   },
+  "reports_dir": "",
   "apps": [
     {
       "id": "app1",

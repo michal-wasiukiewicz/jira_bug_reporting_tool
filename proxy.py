@@ -12,6 +12,7 @@ i przekazuje żądania do wewnętrznych API.
 
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 try:
@@ -33,6 +34,22 @@ APP_URLS = {app["id"]: app["api_url"] for app in config["apps"]}
 
 HOST = config["proxy"]["host"]
 PORT = config["proxy"]["port"]
+
+# --- Katalog raportów ---
+def get_reports_dir() -> Path:
+    """
+    Zwraca katalog do zapisu raportów.
+    Jeśli reports_dir w config jest pusty — używa podkatalogu 'reports' obok proxy.py.
+    Możesz podać ścieżkę bezwzględną (C:/raporty) lub względną (../inne_miejsce).
+    """
+    raw = config.get("reports_dir", "").strip()
+    if not raw or raw == ".":
+        base = Path(__file__).parent / "reports"
+    else:
+        p = Path(raw)
+        base = p if p.is_absolute() else Path(__file__).parent / p
+    base.mkdir(parents=True, exist_ok=True)
+    return base
 
 # --- Flask app ---
 app = Flask(__name__)
@@ -78,6 +95,45 @@ def get_version(app_id):
         return jsonify({"error": f"API zwróciło błąd: {e.response.status_code}"}), 502
     except Exception as e:
         return jsonify({"error": f"Nieznany błąd: {str(e)}"}), 500
+
+
+@app.route("/save-report", methods=["POST"])
+def save_report():
+    """
+    Zapisuje raport do pliku tekstowego.
+    Body JSON: { summary: str, markup: str }
+    Zwraca: { path: str, filename: str }
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Brak danych w żądaniu"}), 400
+
+    summary = data.get("summary", "").strip()
+    markup  = data.get("markup", "").strip()
+
+    if not markup:
+        return jsonify({"error": "Brak treści raportu"}), 400
+
+    reports_dir = get_reports_dir()
+    ts       = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{ts}_bug_report.txt"
+    filepath = reports_dir / filename
+
+    content = f"SUMMARY:\n{summary}\n\n{'─' * 60}\n\n{markup}"
+    filepath.write_text(content, encoding="utf-8")
+
+    return jsonify({
+        "filename": filename,
+        "path":     str(filepath),
+        "dir":      str(reports_dir),
+    })
+
+
+@app.route("/reports-dir", methods=["GET"])
+def reports_dir_info():
+    """Zwraca aktualny katalog zapisu raportów."""
+    d = get_reports_dir()
+    return jsonify({"dir": str(d)})
 
 
 @app.route("/health", methods=["GET"])
