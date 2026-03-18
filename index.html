@@ -36,14 +36,12 @@
     </button>
     <button class="tb-action" id="copy-btn" onclick="copyToClipboard()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-      Kopiuj Markup
+      Markup
     </button>
     <button class="tb-action save-act" id="save-btn" onclick="saveToFile()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      Zapisz
+      Zapisz plik
     </button>
-
-    <!-- styl v3/v4 -->
     <div class="style-switcher">
       <button class="style-btn" data-style="basic" onclick="switchStyle('basic')" title="Styl industrialny">Basic</button>
       <button class="style-btn active" data-style="bugreporter" onclick="switchStyle('bugreporter')" title="Styl editorial">Bug Reporter</button>
@@ -88,7 +86,7 @@
             <button class="force-btn" data-state="empty" data-field-id="repeatability" title="Dołącz mimo braku" onclick="toggleForce('repeatability',this)">·</button>
           </div>
           <div class="field-row">
-            <div class="field"><div class="field-label">Wpływ</div><select id="impact" onchange="update()"><option value="">—</option></select></div>
+            <div class="field"><div class="field-label">Wpływ na biznes</div><select id="impact" onchange="update()"><option value="">—</option></select></div>
             <button class="force-btn" data-state="empty" data-field-id="impact" title="Dołącz mimo braku" onclick="toggleForce('impact',this)">·</button>
           </div>
         </div>

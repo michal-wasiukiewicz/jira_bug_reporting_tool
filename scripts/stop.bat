@@ -1,7 +1,7 @@
 @echo off
 :: Jira Bug Reporter v5 — skrypt zatrzymujący (Windows)
 
-set PIDFILE=jira_bug_reporter.pid
+set PIDFILE=..\jira_bug_reporter.pid
 set PORT=5000
 
 if not exist %PIDFILE% (

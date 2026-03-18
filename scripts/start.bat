@@ -5,9 +5,9 @@
 setlocal
 
 set PORT=5000
-set LOGFILE=jira_bug_reporter.log
-set PIDFILE=jira_bug_reporter.pid
-set SCRIPT=jira_bug_reporter.py
+set LOGFILE=..\jira_bug_reporter.log
+set PIDFILE=..\jira_bug_reporter.pid
+set SCRIPT=..\jira_bug_reporter.py
 
 :: Sprawdź czy Python jest dostępny
 where python >nul 2>&1

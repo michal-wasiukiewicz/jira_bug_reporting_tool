@@ -2,7 +2,7 @@
 # Jira Bug Reporter v5 — skrypt zatrzymujący (Linux/macOS)
 
 PORT=5000
-PIDFILE="jira_bug_reporter.pid"
+PIDFILE="../jira_bug_reporter.pid"
 
 if [ -f "$PIDFILE" ]; then
     PID=$(cat "$PIDFILE")

@@ -3,9 +3,9 @@
 # Uruchamia serwer, zapisuje PID do jira_bug_reporter.pid, logi do jira_bug_reporter.log
 
 PORT=5000
-LOGFILE="jira_bug_reporter.log"
-PIDFILE="jira_bug_reporter.pid"
-SCRIPT="jira_bug_reporter.py"
+LOGFILE="../jira_bug_reporter.log"
+PIDFILE="../jira_bug_reporter.pid"
+SCRIPT="../jira_bug_reporter.py"
 
 # Sprawdź czy Python jest dostępny
 if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then

@@ -156,17 +156,18 @@ python jira_bug_reporter.py 2>&1 | Tee-Object -FilePath "jira_bug_reporter.log"
 jira-bug-reporter/
 ├── jira_bug_reporter.py   ← serwer lokalny (Flask)
 ├── index.html             ← interfejs aplikacji
-├── theme-bugreporter.css  ← motyw "Bug Reporter" (editorial, domyślny)
-├── theme-basic.css        ← motyw "Basic" (industrial)
+├── theme-bugreporter.css  ← motyw "Bug Reporter" (DM Serif + DM Mono, domyślny)
+├── theme-basic.css        ← motyw "Basic" (Outfit + DM Mono)
 ├── app.js                 ← logika aplikacji
 ├── config.json            ← konfiguracja
-├── start.bat              ← start z zapisem PID (Windows)
-├── stop.bat               ← awaryjne zatrzymanie (Windows)
-├── start.sh               ← start z zapisem PID (Linux/macOS)
-├── stop.sh                ← awaryjne zatrzymanie (Linux/macOS)
 ├── requirements.txt
 ├── README.md
-├── jira_bug_reporter.pid  ← PID działającego procesu (tworzony przez start.bat/.sh)
+├── scripts/               ← skrypty uruchamiające i zatrzymujące
+│   ├── start.bat          ← start z zapisem PID (Windows)
+│   ├── scripts\stop.bat           ← awaryjne zatrzymanie (Windows)
+│   ├── start.sh           ← start z zapisem PID (Linux/macOS)
+│   └── stop.sh            ← awaryjne zatrzymanie (Linux/macOS)
+├── jira_bug_reporter.pid  ← PID działającego procesu (tworzony przez skrypt)
 ├── jira_bug_reporter.log  ← logi serwera (tworzony przy starcie)
 └── reports/               ← zapisane raporty (tworzony automatycznie)
 ```
@@ -175,13 +176,13 @@ jira-bug-reporter/
 
 **Windows:**
 ```bat
-start.bat
+scripts\start.bat
 ```
 
 **Linux / macOS:**
 ```bash
-chmod +x start.sh stop.sh   # tylko pierwszy raz
-./start.sh
+chmod +x scripts/start.sh scripts/stop.sh   # tylko pierwszy raz
+scripts/scripts/start.sh
 ```
 
 Skrypty startowe: sprawdzają czy port jest wolny, uruchamiają serwer w tle, zapisują PID do `jira_bug_reporter.pid`, czekają aż serwer wstanie i otwierają przeglądarkę automatycznie.
@@ -196,7 +197,7 @@ Skrypty startowe: sprawdzają czy port jest wolny, uruchamiają serwer w tle, za
   "version":     "5.0",
   "theme":       "bugreporter",   // "bugreporter" lub "basic"
   "dark_mode":   true,            // true = ciemny, false = jasny
-  "reports_dir": "",              // "" = ./reports/, lub ścieżka np. "C:/raporty"
+  "reports_dir": "",              // "" = scripts/reports/, lub ścieżka np. "C:/raporty"
   "apps": [
     {
       "id":      "app1",
@@ -257,6 +258,15 @@ Obsługiwane aliasy: `version`, `environment`, `app_version`, `git_branch`.
 ---
 
 ## Changelog
+
+### v5.1
+- Motyw **Basic** wyrównany do Bug Reporter: nagłówek topbar 110px, chip 52px, te same proporcje
+- Motyw **Basic** zmiana fontu: Syne + JetBrains Mono → **Outfit + DM Mono**
+- Etykieta pola „Wpływ" → **„Wpływ na biznes"** (sekcja Klasyfikacja)
+- Przycisk „Kopiuj Markup" → **„Markup"**
+- Przycisk „Zapisz" → **„Zapisz plik"**
+- Skrypty startowe przeniesione do podfolderu `scripts/`
+- Obsługa błędu SSL (`certificate_verify_failed`) — nowe pole `"ssl_verify": false` w `config.json` pozwala pominąć weryfikację certyfikatu dla środowisk z self-signed SSL
 
 ### v5.0
 - Aplikacja działa wyłącznie jako serwer lokalny (`python jira_bug_reporter.py` → `http://localhost:5000`) — jeden plik HTML, zero problemów z CORS i `file://`
