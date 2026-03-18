@@ -64,24 +64,24 @@ body {
    TOPBAR
    ════════════════════════════════════════════════════ */
 .topbar {
-  height: 52px; background: var(--sidebar-bg);
+  height: 110px; background: var(--sidebar-bg);
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 24px; gap: 14px;
+  display: flex; align-items: center; padding: 0 32px; gap: 20px;
   position: sticky; top: 0; z-index: 200;
 }
-.topbar-brand { display: flex; align-items: center; gap: 10px; font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); }
-.brand-chip { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: grid; place-items: center; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--bg); }
-.topbar-divider { width: 1px; height: 20px; background: var(--border); }
+.topbar-brand { display: flex; align-items: center; gap: 14px; font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--text); }
+.brand-chip { width: 52px; height: 52px; background: var(--accent); border-radius: 12px; display: grid; place-items: center; font-family: 'DM Mono', monospace; font-size: 22px; color: var(--bg); }
+.topbar-divider { width: 1px; height: 40px; background: var(--border); }
 
 .summary-pill {
   flex: 1; max-width: 600px;
-  background: var(--card2); border: 1px solid var(--border); border-radius: 6px;
-  padding: 5px 12px; display: flex; align-items: center; gap: 8px; min-width: 0;
+  background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 16px; display: flex; align-items: center; gap: 10px; min-width: 0;
 }
-.summary-pill-label { font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text2); white-space: nowrap; }
-.summary-pill-value { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--amber); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.summary-pill-label { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text2); white-space: nowrap; }
+.summary-pill-value { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--amber); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 
 /* proxy badge */
 .proxy-badge { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text2); }
@@ -114,7 +114,7 @@ body {
 /* ════════════════════════════════════════════════════
    WORKSPACE
    ════════════════════════════════════════════════════ */
-.workspace { flex: 1; display: grid; grid-template-columns: 3fr 2fr; height: calc(100vh - 52px); }
+.workspace { flex: 1; display: grid; grid-template-columns: 3fr 2fr; height: calc(100vh - 110px); }
 
 /* ════════════════════════════════════════════════════
    SIDEBAR
@@ -197,7 +197,20 @@ input[type=text]:focus, select:focus, textarea:focus {
 }
 textarea { min-height: 72px; line-height: 1.6; font-size: 12.5px; }
 select { cursor: pointer; appearance: none; background-image: var(--select-arrow); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
-select option { background: var(--card2); }
+select[multiple] {
+  padding-right: 11px !important;
+  background-image: none !important;
+  resize: vertical;
+}
+select[multiple] option {
+  padding: 5px 8px;
+  border-radius: 4px;
+  margin: 1px 0;
+}
+select[multiple] option:checked {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
 
 /* dim empty unfilled fields */
 input[data-empty="true"], select[data-empty="true"], textarea[data-empty="true"] { opacity: .45; }

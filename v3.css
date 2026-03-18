@@ -129,7 +129,20 @@ input[type=text]:focus, select:focus, textarea:focus {
 }
 textarea { min-height: 76px; line-height: 1.6; font-size: 13px; }
 select { cursor: pointer; appearance: none; background-image: var(--select-arrow); background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px; }
-select option { background: var(--surface2); }
+select[multiple] {
+  padding-right: 11px !important;
+  background-image: none !important;
+  resize: vertical;
+}
+select[multiple] option {
+  padding: 5px 8px;
+  border-radius: 4px;
+  margin: 1px 0;
+}
+select[multiple] option:checked {
+  background: rgba(232,66,58,.15);
+  color: var(--accent);
+}
 
 /* dim empty fields */
 input[data-empty="true"], select[data-empty="true"], textarea[data-empty="true"] {

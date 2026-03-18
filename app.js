@@ -1,22 +1,60 @@
 // ═══════════════════════════════════════════════════════
-//  KONFIGURACJA — edytuj tutaj
+//  Konfiguracja ładowana z serwera (/config)
+//  Uruchom: python proxy.py  →  http://localhost:5000
 // ═══════════════════════════════════════════════════════
-const PROXY_BASE = 'http://localhost:5000';
-const CONFIG = {
-  proxy: { host: 'localhost', port: 5000 },
-  apps: [
-    { id: 'app1', name: 'Portal Klienta',    modules: ['Logowanie','Dashboard','Płatności','Raporty','Ustawienia'],         api_url: 'http://your-api/app1/version' },
-    { id: 'app2', name: 'Panel Admina',      modules: ['Użytkownicy','Role i uprawnienia','Logi systemowe','Konfiguracja'], api_url: 'http://your-api/app2/version' },
-    { id: 'app3', name: 'Aplikacja Mobilna', modules: ['Onboarding','Główny ekran','Powiadomienia','Profil'],              api_url: 'http://your-api/app3/version' },
-  ],
-  defaults: {
-    browser_os:           'Chrome / Windows 11',
-    severity_options:     ['S1 - Blocker','S2 - Critical','S3 - Major','S4 - Minor','S5 - Trivial'],
-    repeatability_options:['100%','Często','Sporadycznie','Raz'],
-    impact_options:       ['Krytyczny','Wysoki','Średni','Niski'],
-  }
-};
-// ═══════════════════════════════════════════════════════
+const PROXY_BASE = '';   // pusty = ten sam origin (serwer proxy serwuje pliki)
+let CONFIG = null;
+
+async function loadConfig() {
+  const r = await fetch('/config');
+  if (!r.ok) throw new Error(`Błąd ładowania config: HTTP ${r.status}`);
+  CONFIG = await r.json();
+  console.log('[config] Załadowano:', CONFIG.apps.map(a => a.name));
+}
+
+// ── Theme — ładuje z config, zapisuje z powrotem ───────
+function applyTheme(theme, darkMode) {
+  // CSS
+  const link = document.getElementById('theme-css');
+  if (link) link.href = `${theme}.css`;
+  // dark/light
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  // ikona przełącznika
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.textContent = darkMode ? '🌙' : '☀️';
+  const lbl = document.getElementById('theme-label');
+  if (lbl) lbl.textContent = darkMode ? 'Dark' : 'Light';
+  // przełącznik stylu v3/v4
+  document.querySelectorAll('.style-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.style === theme);
+  });
+}
+
+async function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const newDark = !isDark;
+  applyTheme(CONFIG.theme || 'v4', newDark);
+  try {
+    await fetch('/config/dark_mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dark_mode: newDark }),
+    });
+  } catch(e) { console.warn('[theme] Zapis dark_mode nieudany:', e.message); }
+}
+
+async function switchStyle(theme) {
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  CONFIG.theme = theme;
+  applyTheme(theme, isDark);
+  try {
+    await fetch('/config/theme', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme }),
+    });
+  } catch(e) { console.warn('[theme] Zapis theme nieudany:', e.message); }
+}
 
 // ── Theme ──────────────────────────────────────────────
 function toggleTheme() {
@@ -186,11 +224,11 @@ function populateSelects() {
   update();
 }
 
-// ── App change → modules ──────────────────────────────
+// ── App change → modules (multi-select) ──────────────
 function onAppChange() {
   const appId = document.getElementById('app-select').value;
   const mod   = document.getElementById('module-select');
-  mod.innerHTML = '<option value="">—</option>';
+  mod.innerHTML = '';
   if (appId) {
     const app = CONFIG.apps.find(a => a.id === appId);
     if (app) app.modules.forEach(m => mod.appendChild(new Option(m, m)));
@@ -245,7 +283,7 @@ function getValues() {
     repeatability: document.getElementById('repeatability').value,
     impact:        document.getElementById('impact').value,
     description:   document.getElementById('description').value.trim(),
-    module:        document.getElementById('module-select').value,
+    module: Array.from(document.getElementById('module-select').selectedOptions).map(o => o.value),
     ver:           document.getElementById('ver').value.trim(),
     branch:        document.getElementById('branch').value.trim(),
     env:           document.getElementById('env').value.trim(),
@@ -265,19 +303,20 @@ function update() {
   const v = getValues();
   updateEmptyStates();
   updateForceBtns();
-  const st = v.severity ? `[${v.severity.split(' ')[0]}]` : '[S?]';
-  const mt = v.module   ? `[${v.module}]` : '[Moduł]';
-  const ds = v.description ? v.description.slice(0,50)+(v.description.length>50?'…':'') : 'Opis...';
-  document.getElementById('summary-preview').textContent = `${st} ${mt} ${ds}`;
+  const st   = v.severity ? `[${v.severity.split(' ')[0]}]` : '[S?]';
+  // modules: [Mod1][Mod2] bez spacji
+  const mt   = v.module.length ? v.module.map(m => `[${m}]`).join('') : '[Moduł]';
+  const ds   = v.description ? v.description.slice(0,50)+(v.description.length>50?'…':'') : 'Opis...';
+  document.getElementById('summary-preview').textContent = `${st}${mt} ${ds}`;
   document.getElementById('preview-output').textContent  = buildMarkup(v);
 }
 
 // ── Build markup — fully optional sections ─────────────
 function buildMarkup(v) {
-  const st = v.severity ? `[${v.severity.split(' ')[0]}]` : '[S?]';
-  const mt = v.module || 'Moduł';
-  const ds = v.description ? v.description.slice(0,50)+(v.description.length>50?'…':'') : 'Opis...';
-  const L  = [];
+  const st  = v.severity ? `[${v.severity.split(' ')[0]}]` : '[S?]';
+  const mt  = v.module.length ? v.module.map(m => `[${m}]`).join('') : '[Moduł]';
+  const ds  = v.description ? v.description.slice(0,50)+(v.description.length>50?'…':'') : 'Opis...';
+  const L   = [];
 
   // h1 always (it's the ticket title line)
   L.push(`h1. ${st} [${mt}] ${ds}`, '');
@@ -473,7 +512,9 @@ function showToast(msg, type = 'success') {
 }
 
 // ── Init ───────────────────────────────────────────────
-function init() {
+async function init() {
+  await loadConfig();
+  applyTheme(CONFIG.theme || 'v4', CONFIG.dark_mode !== false);
   populateSelects();
   checkProxy();
   ['actual','testdata'].forEach(id => {

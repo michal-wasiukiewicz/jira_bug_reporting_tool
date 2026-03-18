@@ -3,6 +3,8 @@
     "host": "localhost",
     "port": 5000
   },
+  "theme": "v4",
+  "dark_mode": true,
   "reports_dir": "",
   "apps": [
     {
@@ -26,24 +28,8 @@
   ],
   "defaults": {
     "browser_os": "Chrome / Windows 11",
-    "severity_options": [
-      "S1 - Blocker",
-      "S2 - Critical",
-      "S3 - Major",
-      "S4 - Minor",
-      "S5 - Trivial"
-    ],
-    "repeatability_options": [
-      "100%",
-      "Często",
-      "Sporadycznie",
-      "Raz"
-    ],
-    "impact_options": [
-      "Krytyczny",
-      "Wysoki",
-      "Średni",
-      "Niski"
-    ]
+    "severity_options": ["S1 - Blocker", "S2 - Critical", "S3 - Major", "S4 - Minor", "S5 - Trivial"],
+    "repeatability_options": ["100%", "Często", "Sporadycznie", "Raz"],
+    "impact_options": ["Krytyczny", "Wysoki", "Średni", "Niski"]
   }
 }

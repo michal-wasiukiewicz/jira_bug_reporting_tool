@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-CORS Proxy dla Jira Bug Formatter
-----------------------------------
+Jira Bug Formatter — serwer lokalny
+-------------------------------------
 Uruchomienie:
     pip install flask flask-cors requests
     python proxy.py
 
-Proxy nasłuchuje na http://localhost:5000
-i przekazuje żądania do wewnętrznych API.
+Następnie otwórz: http://localhost:5000
 """
 
 import json
@@ -16,138 +15,162 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    from flask import Flask, request, jsonify
+    from flask import Flask, request, jsonify, send_from_directory
     from flask_cors import CORS
-    import requests
+    import requests as req_lib
 except ImportError:
     print("Brak wymaganych bibliotek. Uruchom:")
     print("  pip install flask flask-cors requests")
     sys.exit(1)
 
-# --- Wczytaj konfigurację ---
-CONFIG_PATH = Path(__file__).parent / "config.json"
-with open(CONFIG_PATH, encoding="utf-8") as f:
-    config = json.load(f)
+BASE_DIR    = Path(__file__).parent
+CONFIG_PATH = BASE_DIR / "config.json"
 
-# Zbuduj słownik app_id -> api_url
-APP_URLS = {app["id"]: app["api_url"] for app in config["apps"]}
+# ── Config helpers ─────────────────────────────────────────────────────────────
+def load_config() -> dict:
+    with open(CONFIG_PATH, encoding="utf-8") as f:
+        return json.load(f)
 
-HOST = config["proxy"]["host"]
-PORT = config["proxy"]["port"]
+def save_config(cfg: dict):
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
 
-# --- Katalog raportów ---
-def get_reports_dir() -> Path:
-    """
-    Zwraca katalog do zapisu raportów.
-    Jeśli reports_dir w config jest pusty — używa podkatalogu 'reports' obok proxy.py.
-    Możesz podać ścieżkę bezwzględną (C:/raporty) lub względną (../inne_miejsce).
-    """
-    raw = config.get("reports_dir", "").strip()
+def get_reports_dir(cfg: dict) -> Path:
+    raw = cfg.get("reports_dir", "").strip()
     if not raw or raw == ".":
-        base = Path(__file__).parent / "reports"
+        base = BASE_DIR / "reports"
     else:
         p = Path(raw)
-        base = p if p.is_absolute() else Path(__file__).parent / p
+        base = p if p.is_absolute() else BASE_DIR / p
     base.mkdir(parents=True, exist_ok=True)
     return base
 
-# --- Flask app ---
-app = Flask(__name__)
-CORS(app, origins=["null", "file://", "http://localhost", "http://127.0.0.1"])
+# ── Flask ──────────────────────────────────────────────────────────────────────
+app = Flask(__name__, static_folder=str(BASE_DIR))
+CORS(app)
 
+# ── Serve static files (HTML, CSS, JS) ────────────────────────────────────────
+@app.route("/")
+def index():
+    return send_from_directory(BASE_DIR, "index.html")
 
+@app.route("/<path:filename>")
+def static_files(filename):
+    return send_from_directory(BASE_DIR, filename)
+
+# ── Config endpoints ───────────────────────────────────────────────────────────
 @app.route("/config", methods=["GET"])
-def get_config():
-    """Zwraca konfigurację aplikacji do frontendu."""
-    return jsonify(config)
+def get_config_endpoint():
+    return jsonify(load_config())
 
+@app.route("/config/theme", methods=["POST"])
+def set_theme():
+    """Zapisuje wybrany styl (v3/v4) do config.json."""
+    data = request.get_json(silent=True) or {}
+    theme = data.get("theme")
+    if theme not in ("v3", "v4"):
+        return jsonify({"error": "Nieprawidłowy theme. Dozwolone: v3, v4"}), 400
+    cfg = load_config()
+    cfg["theme"] = theme
+    save_config(cfg)
+    print(f"[config] theme → {theme}")
+    return jsonify({"ok": True, "theme": theme})
 
+@app.route("/config/dark_mode", methods=["POST"])
+def set_dark_mode():
+    """Zapisuje tryb ciemny/jasny do config.json."""
+    data = request.get_json(silent=True) or {}
+    if "dark_mode" not in data:
+        return jsonify({"error": "Brak pola dark_mode"}), 400
+    cfg = load_config()
+    cfg["dark_mode"] = bool(data["dark_mode"])
+    save_config(cfg)
+    print(f"[config] dark_mode → {cfg['dark_mode']}")
+    return jsonify({"ok": True, "dark_mode": cfg["dark_mode"]})
+
+# ── API proxy ──────────────────────────────────────────────────────────────────
 @app.route("/api/version/<app_id>", methods=["GET"])
 def get_version(app_id):
-    """
-    Proxy do wewnętrznego API wersji.
-    Oczekiwany format odpowiedzi z API: { ver, branch, env, appVer }
-    """
-    if app_id not in APP_URLS:
-        return jsonify({"error": f"Nieznana aplikacja: {app_id}"}), 404
+    cfg = load_config()
+    app_map = {a["id"]: a["api_url"] for a in cfg["apps"]}
 
-    target_url = APP_URLS[app_id]
+    if app_id not in app_map:
+        return jsonify({"error": f"Nieznana aplikacja: '{app_id}'. Dostępne: {list(app_map)}"}), 404
 
+    url = app_map[app_id]
+    print(f"[proxy] GET {url}")
     try:
-        response = requests.get(target_url, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-
-        # Normalizuj odpowiedź — wyciągnij tylko pola których potrzebujemy
-        normalized = {
-            "ver":    data.get("ver", data.get("version", "")),
-            "branch": data.get("branch", ""),
-            "env":    data.get("env", data.get("environment", "")),
-            "appVer": data.get("appVer", data.get("app_version", "")),
+        r = req_lib.get(url, timeout=5)
+        r.raise_for_status()
+        d = r.json()
+        result = {
+            "ver":    d.get("ver",    d.get("version",     "")),
+            "branch": d.get("branch", d.get("git_branch",  "")),
+            "env":    d.get("env",    d.get("environment", "")),
+            "appVer": d.get("appVer", d.get("app_version", "")),
         }
-        return jsonify(normalized)
-
-    except requests.exceptions.ConnectionError:
-        return jsonify({"error": "Nie można połączyć się z API. Sprawdź VPN / sieć."}), 502
-    except requests.exceptions.Timeout:
-        return jsonify({"error": "API nie odpowiedziało w czasie 5 sekund."}), 504
-    except requests.exceptions.HTTPError as e:
-        return jsonify({"error": f"API zwróciło błąd: {e.response.status_code}"}), 502
+        print(f"[proxy] OK → {result}")
+        return jsonify(result)
+    except req_lib.exceptions.ConnectionError as e:
+        msg = f"Nie można połączyć: {url}"
+        print(f"[proxy] ERROR: {msg} ({e})")
+        return jsonify({"error": msg}), 502
+    except req_lib.exceptions.Timeout:
+        msg = f"Timeout (5s): {url}"
+        print(f"[proxy] TIMEOUT: {msg}")
+        return jsonify({"error": msg}), 504
+    except req_lib.exceptions.HTTPError as e:
+        msg = f"HTTP {e.response.status_code}: {url}"
+        print(f"[proxy] HTTP ERROR: {msg}")
+        return jsonify({"error": msg}), 502
     except Exception as e:
-        return jsonify({"error": f"Nieznany błąd: {str(e)}"}), 500
+        print(f"[proxy] EXCEPTION: {e}")
+        return jsonify({"error": str(e)}), 500
 
-
+# ── Save report ────────────────────────────────────────────────────────────────
 @app.route("/save-report", methods=["POST"])
 def save_report():
-    """
-    Zapisuje raport do pliku tekstowego.
-    Body JSON: { summary: str, markup: str }
-    Zwraca: { path: str, filename: str }
-    """
     data = request.get_json(silent=True)
     if not data:
-        return jsonify({"error": "Brak danych w żądaniu"}), 400
-
+        return jsonify({"error": "Brak danych"}), 400
+    markup  = data.get("markup",  "").strip()
     summary = data.get("summary", "").strip()
-    markup  = data.get("markup", "").strip()
-
     if not markup:
         return jsonify({"error": "Brak treści raportu"}), 400
 
-    reports_dir = get_reports_dir()
-    ts       = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{ts}_bug_report.txt"
-    filepath = reports_dir / filename
+    cfg         = load_config()
+    reports_dir = get_reports_dir(cfg)
+    ts          = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename    = f"{ts}_bug_report.txt"
+    filepath    = reports_dir / filename
+    filepath.write_text(f"SUMMARY:\n{summary}\n\n{'─'*60}\n\n{markup}", encoding="utf-8")
+    print(f"[save] {filepath}")
+    return jsonify({"filename": filename, "path": str(filepath), "dir": str(reports_dir)})
 
-    content = f"SUMMARY:\n{summary}\n\n{'─' * 60}\n\n{markup}"
-    filepath.write_text(content, encoding="utf-8")
-
-    return jsonify({
-        "filename": filename,
-        "path":     str(filepath),
-        "dir":      str(reports_dir),
-    })
-
-
+# ── Reports dir info ───────────────────────────────────────────────────────────
 @app.route("/reports-dir", methods=["GET"])
 def reports_dir_info():
-    """Zwraca aktualny katalog zapisu raportów."""
-    d = get_reports_dir()
-    return jsonify({"dir": str(d)})
+    return jsonify({"dir": str(get_reports_dir(load_config()))})
 
-
+# ── Health ─────────────────────────────────────────────────────────────────────
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "proxy": f"{HOST}:{PORT}"})
+    cfg = load_config()
+    return jsonify({"status": "ok", "theme": cfg.get("theme","v4"), "dark_mode": cfg.get("dark_mode", True)})
 
-
+# ── Start ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print(f"\n🚀 CORS Proxy uruchomiony na http://{HOST}:{PORT}")
-    print(f"   Obsługiwane aplikacje: {list(APP_URLS.keys())}")
-    print(f"   Skonfigurowane API URL-e:")
-    for app_id, url in APP_URLS.items():
-        print(f"     [{app_id}] → {url}")
-    print("\n   Otwórz index.html w przeglądarce, proxy działa w tle.")
-    print("   Zatrzymaj: Ctrl+C\n")
-
-    app.run(host=HOST, port=PORT, debug=False)
+    cfg  = load_config()
+    host = cfg["proxy"]["host"]
+    port = cfg["proxy"]["port"]
+    print(f"\n🚀  Jira Bug Formatter")
+    print(f"     http://{host}:{port}\n")
+    print(f"   Theme:     {cfg.get('theme','v4')}  |  Dark mode: {cfg.get('dark_mode', True)}")
+    print(f"   Config:    {CONFIG_PATH}")
+    print(f"   Raporty:   {get_reports_dir(cfg)}")
+    print(f"\n   Aplikacje:")
+    for a in cfg["apps"]:
+        print(f"     [{a['id']}] {a['name']}")
+        print(f"             → {a['api_url']}")
+    print(f"\n   Zatrzymaj: Ctrl+C\n")
+    app.run(host=host, port=port, debug=False)
