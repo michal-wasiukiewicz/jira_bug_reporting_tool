@@ -15,6 +15,141 @@ Następnie otwórz: **http://localhost:5000**
 
 ---
 
+## Uruchamianie z zapisem PID
+
+Zapisanie PID procesu pozwala go awaryjnie znaleźć i zabić bez użycia interfejsu, gdy coś się posypie.
+
+### Windows
+
+```bat
+:: start.bat
+@echo off
+start /B python jira_bug_reporter.py > jira_bug_reporter.log 2>&1
+:: Poczekaj chwilę aż proces wstanie, potem zapisz PID
+timeout /t 2 /nobreak >nul
+for /f "tokens=2" %%i in ('tasklist /fi "imagename eq python.exe" /fo list ^| find "PID:"') do (
+    echo %%i > jira_bug_reporter.pid
+    echo [start] PID: %%i
+    goto :done
+)
+:done
+echo Otwórz http://localhost:5000
+```
+
+Albo prościej — jednolinijkowo w PowerShell:
+
+```powershell
+# Uruchom i zapisz PID
+$p = Start-Process python -ArgumentList "jira_bug_reporter.py" -PassThru -RedirectStandardOutput "jira_bug_reporter.log" -RedirectStandardError "jira_bug_reporter_err.log" -NoNewWindow
+$p.Id | Out-File "jira_bug_reporter.pid"
+Write-Host "[start] PID: $($p.Id) — otwórz http://localhost:5000"
+```
+
+### Linux / macOS
+
+```bash
+# start.sh
+python jira_bug_reporter.py >> jira_bug_reporter.log 2>&1 &
+echo $! > jira_bug_reporter.pid
+echo "[start] PID: $(cat jira_bug_reporter.pid) — otwórz http://localhost:5000"
+```
+
+---
+
+## Awaryjne zatrzymanie (gdy interfejs nie odpowiada)
+
+### Windows — znajdź i zabij po PID z pliku
+
+```powershell
+# Odczytaj PID z pliku i zatrzymaj
+$pid = Get-Content jira_bug_reporter.pid
+Stop-Process -Id $pid -Force
+Write-Host "Zatrzymano proces PID $pid"
+```
+
+### Windows — znajdź po porcie (gdy nie masz pliku PID)
+
+```powershell
+# Znajdź co zajmuje port 5000
+netstat -ano | findstr :5000
+# Wynik np: TCP  0.0.0.0:5000  ...  LISTENING  12345
+#                                               ^^^^^ to jest PID
+
+# Zatrzymaj po PID
+taskkill /PID 12345 /F
+```
+
+### Linux / macOS — zabij po PID z pliku
+
+```bash
+kill $(cat jira_bug_reporter.pid)
+# lub wymuś:
+kill -9 $(cat jira_bug_reporter.pid)
+```
+
+### Linux / macOS — znajdź po porcie (gdy nie masz pliku PID)
+
+```bash
+# Znajdź PID procesu zajmującego port 5000
+lsof -ti :5000
+# lub:
+ss -tlnp | grep 5000
+
+# Zatrzymaj
+kill $(lsof -ti :5000)
+```
+
+---
+
+## Tryb debug
+
+Tryb debug włącza:
+- **auto-reload** — serwer restartuje się automatycznie po każdej zmianie `jira_bug_reporter.py`
+- **szczegółowe logi błędów** — pełny stack trace w konsoli i w przeglądarce
+- **interaktywny debugger** w przeglądarce przy wyjątkach (pin wyświetlany w konsoli)
+
+### Uruchomienie w trybie debug
+
+```bash
+# Przez zmienną środowiskową (zalecane)
+set FLASK_DEBUG=1         # Windows CMD
+$env:FLASK_DEBUG=1        # Windows PowerShell
+export FLASK_DEBUG=1      # Linux / macOS
+
+python jira_bug_reporter.py
+```
+
+Albo bezpośrednio w kodzie — zmień ostatnią linię `jira_bug_reporter.py`:
+
+```python
+# Zamień:
+app.run(host=host, port=port, debug=False)
+
+# Na:
+app.run(host=host, port=port, debug=True)
+```
+
+> ⚠️ **Nie używaj `debug=True` w sieci firmowej** — interaktywny debugger Flask daje dostęp do powłoki Python na serwerze. Tryb debug tylko na `localhost`.
+
+### Podgląd logów na żywo (Linux / macOS)
+
+```bash
+# W jednym terminalu uruchom serwer z zapisem logów:
+python jira_bug_reporter.py 2>&1 | tee jira_bug_reporter.log
+
+# W drugim terminalu śledź logi:
+tail -f jira_bug_reporter.log
+```
+
+### Podgląd logów na żywo (Windows PowerShell)
+
+```powershell
+# Uruchom i jednocześnie wyświetlaj logi
+python jira_bug_reporter.py 2>&1 | Tee-Object -FilePath "jira_bug_reporter.log"
+```
+
+---
+
 ## Struktura plików
 
 ```
@@ -25,10 +160,31 @@ jira-bug-reporter/
 ├── theme-basic.css        ← motyw "Basic" (industrial)
 ├── app.js                 ← logika aplikacji
 ├── config.json            ← konfiguracja
+├── start.bat              ← start z zapisem PID (Windows)
+├── stop.bat               ← awaryjne zatrzymanie (Windows)
+├── start.sh               ← start z zapisem PID (Linux/macOS)
+├── stop.sh                ← awaryjne zatrzymanie (Linux/macOS)
 ├── requirements.txt
 ├── README.md
+├── jira_bug_reporter.pid  ← PID działającego procesu (tworzony przez start.bat/.sh)
+├── jira_bug_reporter.log  ← logi serwera (tworzony przy starcie)
 └── reports/               ← zapisane raporty (tworzony automatycznie)
 ```
+
+### Zalecany sposób uruchomienia
+
+**Windows:**
+```bat
+start.bat
+```
+
+**Linux / macOS:**
+```bash
+chmod +x start.sh stop.sh   # tylko pierwszy raz
+./start.sh
+```
+
+Skrypty startowe: sprawdzają czy port jest wolny, uruchamiają serwer w tle, zapisują PID do `jira_bug_reporter.pid`, czekają aż serwer wstanie i otwierają przeglądarkę automatycznie.
 
 ---
 
