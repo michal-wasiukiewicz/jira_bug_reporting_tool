@@ -1,0 +1,48 @@
+{
+  "proxy": {
+    "host": "localhost",
+    "port": 5000
+  },
+  "apps": [
+    {
+      "id": "app1",
+      "name": "Portal Klienta",
+      "modules": ["Logowanie", "Dashboard", "Płatności", "Raporty", "Ustawienia"],
+      "api_url": "http://your-internal-api/app1/version"
+    },
+    {
+      "id": "app2",
+      "name": "Panel Admina",
+      "modules": ["Użytkownicy", "Role i uprawnienia", "Logi systemowe", "Konfiguracja"],
+      "api_url": "http://your-internal-api/app2/version"
+    },
+    {
+      "id": "app3",
+      "name": "Aplikacja Mobilna",
+      "modules": ["Onboarding", "Główny ekran", "Powiadomienia", "Profil"],
+      "api_url": "http://your-internal-api/app3/version"
+    }
+  ],
+  "defaults": {
+    "browser_os": "Chrome / Windows 11",
+    "severity_options": [
+      "S1 - Blocker",
+      "S2 - Critical",
+      "S3 - Major",
+      "S4 - Minor",
+      "S5 - Trivial"
+    ],
+    "repeatability_options": [
+      "100%",
+      "Często",
+      "Sporadycznie",
+      "Raz"
+    ],
+    "impact_options": [
+      "Krytyczny",
+      "Wysoki",
+      "Średni",
+      "Niski"
+    ]
+  }
+}
