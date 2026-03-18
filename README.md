@@ -211,7 +211,36 @@ Skrypty startowe: sprawdzają czy port jest wolny, uruchamiają serwer w tle, za
 
 Zmiany w `config.json` są widoczne natychmiast — nie trzeba restartować serwera.
 
-### Nagłówki HTTP per aplikacja (`api_headers`)
+### Zabezpieczenia (`security`)
+
+Sekcja `security` w `config.json` kontroluje rate limiting i circuit breaker. Zmiany są widoczne natychmiast bez restartu.
+
+```json
+"security": {
+  "api_rate_limit":       5,    // max wywołań ⟳ API w oknie czasowym
+  "api_rate_window_sec":  60,   // okno czasowe dla API (sekundy)
+  "save_rate_limit":      10,   // max zapisów pliku w oknie czasowym
+  "save_rate_window_sec": 60,   // okno czasowe dla zapisu (sekundy)
+  "cb_failure_threshold": 3,    // ile błędów zapisu otwiera circuit breaker
+  "cb_recovery_sec":      30    // przerwa recovery circuit breakera (sekundy)
+}
+```
+
+**Rate limiter (sliding window)** — liczy wywołania w ruchomym oknie czasowym. Gdy limit przekroczony, serwer zwraca `429 Too Many Requests` z informacją ile sekund poczekać. Działa niezależnie dla wywołań API i zapisu plików.
+
+**Circuit breaker** — chroni zapis plików przed kaskadą błędów (np. brak miejsca na dysku, błędne uprawnienia):
+
+| Stan | Znaczenie |
+|------|-----------|
+| `closed` | normalny tryb — zapis działa |
+| `open` | zbyt wiele błędów — zapis zablokowany na `cb_recovery_sec` sekund |
+| `half_open` | próbne wywołanie po przerwie — jeśli sukces → `closed`, jeśli błąd → `open` |
+
+**Endpointy diagnostyczne:**
+- `GET /security/status` — aktualny stan limiterów i circuit breakera
+- `POST /security/circuit-reset` — ręczny reset circuit breakera (gdy usuniesz przyczynę błędu)
+
+
 
 Jeśli API wymaga dodatkowych nagłówków (np. token uwierzytelniający, identyfikator użytkownika), dodaj pole `api_headers` do wybranej aplikacji:
 
@@ -285,12 +314,12 @@ Obsługiwane aliasy: `version`, `environment`, `app_version`, `git_branch`.
 ### v5.1
 - Motyw **Basic** wyrównany do Bug Reporter: nagłówek topbar 110px, chip 52px, te same proporcje
 - Motyw **Basic** zmiana fontu: Syne + JetBrains Mono → **Outfit + DM Mono**
-- Etykieta pola „Wpływ" → **„Wpływ na biznes"** (sekcja Klasyfikacja)
-- Przycisk „Kopiuj Markup" → **„Markup"**
-- Przycisk „Zapisz" → **„Zapisz plik"**
+- Etykieta pola „Wpływ" → **„Wpływ na biznes"**; „Kopiuj Markup" → **„Markup"**; „Zapisz" → **„Zapisz plik"**
 - Skrypty startowe przeniesione do podfolderu `scripts/`
-- Obsługa błędu SSL (`certificate_verify_failed`) — nowe pole `"ssl_verify": false` w `config.json`
-- **Custom nagłówki HTTP per aplikacja** — pole `api_headers` w definicji aplikacji pozwala dodać dowolne nagłówki do wywołań API (np. `user`, `X-Api-Key`, `Authorization`)
+- Obsługa błędu SSL (`certificate_verify_failed`) — pole `"ssl_verify": false` w `config.json`
+- **Custom nagłówki HTTP per aplikacja** — pole `api_headers` w definicji aplikacji
+- **Rate limiting** — sliding window dla wywołań API i zapisu plików, konfigurowalny przez sekcję `security` w `config.json`; przekroczenie limitu → `429` z informacją kiedy ponowić
+- **Circuit breaker** — automatyczne blokowanie zapisu plików po zbyt wielu błędach z rzędu; samoczynny odzysk po `cb_recovery_sec` sekundach; ręczny reset przez `POST /security/circuit-reset`
 
 ### v5.0
 - Aplikacja działa wyłącznie jako serwer lokalny (`python jira_bug_reporter.py` → `http://localhost:5000`) — jeden plik HTML, zero problemów z CORS i `file://`

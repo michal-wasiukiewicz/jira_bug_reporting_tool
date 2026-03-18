@@ -8,6 +8,14 @@
   "dark_mode": true,
   "ssl_verify": true,
   "reports_dir": "",
+  "security": {
+    "api_rate_limit":       5,
+    "api_rate_window_sec":  60,
+    "save_rate_limit":      10,
+    "save_rate_window_sec": 60,
+    "cb_failure_threshold": 3,
+    "cb_recovery_sec":      30
+  },
   "apps": [
     {
       "id": "app1",
