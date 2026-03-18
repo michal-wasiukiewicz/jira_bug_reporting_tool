@@ -515,6 +515,31 @@ async function saveToFile() {
   finally { btn.innerHTML = origHtml; btn.classList.remove('saving'); }
 }
 
+// ── Shutdown server ────────────────────────────────────
+async function shutdownServer() {
+  const btn = document.querySelector('.shutdown-btn');
+  if (!confirm('Czy na pewno chcesz wyłączyć serwer?\nStrona przestanie działać.')) return;
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    await fetch('/shutdown', { method: 'POST' });
+  } catch {}
+  // Pokaż komunikat — serwer nie odpowie już po zamknięciu
+  document.body.innerHTML = `
+    <div style="
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:#0b0d14; font-family:'DM Sans',sans-serif; color:#dde2f0; text-align:center;
+    ">
+      <div>
+        <div style="font-size:48px;margin-bottom:20px">⏻</div>
+        <div style="font-size:22px;font-weight:600;margin-bottom:10px">Serwer wyłączony</div>
+        <div style="font-size:14px;color:#8892a8">Możesz zamknąć tę kartę przeglądarki.</div>
+        <div style="margin-top:28px;font-size:12px;color:#252a3a;font-family:monospace">
+          Aby ponownie uruchomić: <code style="color:#4ade80">python jira_bug_reporter.py</code>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ── Toast ──────────────────────────────────────────────
 let _toastTimer;
 function showToast(msg, type = 'success') {

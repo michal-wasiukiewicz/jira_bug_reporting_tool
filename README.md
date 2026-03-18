@@ -111,6 +111,7 @@ Obsługiwane aliasy: `version`, `environment`, `app_version`, `git_branch`.
 - Przełącznik motywu i dark/light mode zapisuje wybór w `config.json` — stan pamiętany między sesjami
 - **Kopiuj Markup** — kopiuje treść bez linii `h1` summary (do wklejenia w pole opisu Jiry)
 - **Zapisz do pliku** — zapisuje pełną treść: summary + markup (do archiwum)
+- **Przycisk Wyłącz** w topbarze — zamknięcie serwera z poziomu przeglądarki bez użycia konsoli
 - Nagłówek topbar powiększony 2× (motyw Bug Reporter)
 - Pola aplikacja/moduły: multi-select (Ctrl/Cmd+klik dla wielu modułów)
 - Summary budowane bez spacji między tagami `[]`: `[S1][Moduł][Moduł2] Opis`

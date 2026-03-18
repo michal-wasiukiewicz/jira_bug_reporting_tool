@@ -54,10 +54,16 @@
       <span class="theme-sw-icon" id="theme-icon">🌙</span>
       <div class="theme-sw-track"><div class="theme-sw-thumb"></div></div>
     </div>
-  </div>
-</div>
 
-<!-- ══ WORKSPACE ══ -->
+    <!-- shutdown -->
+    <button class="tb-action shutdown-btn" onclick="shutdownServer()" title="Wyłącz serwer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18.36 6.64A9 9 0 1 1 5.64 6.64"/><line x1="12" y1="2" x2="12" y2="12"/>
+      </svg>
+      Wyłącz
+    </button>
+  </div><!-- /topbar-right -->
+</div><!-- /topbar -->
 <div class="workspace">
 
   <!-- ══ SIDEBAR ══ -->
@@ -258,8 +264,18 @@
   transition: all .15s;
 }
 .style-btn:hover { color: var(--text); background: var(--border); }
-.style-btn.active {
-  background: var(--accent); color: var(--bg);
+.style-btn.active { background: var(--accent); color: var(--bg); }
+
+/* shutdown button */
+.shutdown-btn {
+  opacity: .55;
+  transition: opacity .15s, border-color .15s, color .15s !important;
+}
+.shutdown-btn:hover {
+  opacity: 1;
+  border-color: var(--warn) !important;
+  color: var(--warn) !important;
+  background: var(--warn-dim) !important;
 }
 </style>
 

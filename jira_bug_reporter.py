@@ -156,7 +156,21 @@ def reports_dir_info():
 @app.route("/health", methods=["GET"])
 def health():
     cfg = load_config()
-    return jsonify({"status": "ok", "theme": cfg.get("theme","v4"), "dark_mode": cfg.get("dark_mode", True)})
+    return jsonify({"status": "ok", "theme": cfg.get("theme","bugreporter"), "dark_mode": cfg.get("dark_mode", True)})
+
+# ── Shutdown ───────────────────────────────────────────────────────────────────
+@app.route("/shutdown", methods=["POST"])
+def shutdown():
+    """Zamyka serwer z poziomu interfejsu użytkownika."""
+    import threading
+    print("\n[server] Zamykanie na żądanie użytkownika...")
+    # Krótkie opóźnienie — żeby odpowiedź zdążyła dotrzeć do przeglądarki
+    def _stop():
+        import time, os, signal
+        time.sleep(0.5)
+        os.kill(os.getpid(), signal.SIGTERM)
+    threading.Thread(target=_stop, daemon=True).start()
+    return jsonify({"status": "shutting_down"})
 
 # ── Start ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
