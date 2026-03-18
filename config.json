@@ -3,7 +3,8 @@
     "host": "localhost",
     "port": 5000
   },
-  "theme": "v4",
+  "version": "5.0",
+  "theme": "bugreporter",
   "dark_mode": true,
   "reports_dir": "",
   "apps": [

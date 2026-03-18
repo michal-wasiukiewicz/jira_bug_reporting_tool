@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Bug Reporter — Jira</title>
 <!-- CSS ładowany dynamicznie przez app.js na podstawie config.json -->
-<link id="theme-css" rel="stylesheet" href="v4.css"/>
+<link id="theme-css" rel="stylesheet" href="theme-bugreporter.css"/>
 </head>
 <body>
 
@@ -45,8 +45,8 @@
 
     <!-- styl v3/v4 -->
     <div class="style-switcher">
-      <button class="style-btn" data-style="v3" onclick="switchStyle('v3')" title="Styl industrialny">v3</button>
-      <button class="style-btn active" data-style="v4" onclick="switchStyle('v4')" title="Styl editorial">v4</button>
+      <button class="style-btn" data-style="basic" onclick="switchStyle('basic')" title="Styl industrialny">Basic</button>
+      <button class="style-btn active" data-style="bugreporter" onclick="switchStyle('bugreporter')" title="Styl editorial">Bug Reporter</button>
     </div>
 
     <!-- dark/light toggle -->

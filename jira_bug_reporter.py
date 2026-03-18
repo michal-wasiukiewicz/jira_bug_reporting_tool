@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Jira Bug Formatter — serwer lokalny
+Jira Bug Reporter v5 — serwer lokalny
 -------------------------------------
 Uruchomienie:
     pip install flask flask-cors requests
-    python proxy.py
+    python jira_bug_reporter.py
 
 Następnie otwórz: http://localhost:5000
 """
@@ -68,8 +68,8 @@ def set_theme():
     """Zapisuje wybrany styl (v3/v4) do config.json."""
     data = request.get_json(silent=True) or {}
     theme = data.get("theme")
-    if theme not in ("v3", "v4"):
-        return jsonify({"error": "Nieprawidłowy theme. Dozwolone: v3, v4"}), 400
+    if theme not in ("basic", "bugreporter"):
+        return jsonify({"error": "Nieprawidłowy theme. Dozwolone: basic, bugreporter"}), 400
     cfg = load_config()
     cfg["theme"] = theme
     save_config(cfg)
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     cfg  = load_config()
     host = cfg["proxy"]["host"]
     port = cfg["proxy"]["port"]
-    print(f"\n🚀  Jira Bug Formatter")
+    print(f"\n🚀  Jira Bug Reporter v5")
     print(f"     http://{host}:{port}\n")
     print(f"   Theme:     {cfg.get('theme','v4')}  |  Dark mode: {cfg.get('dark_mode', True)}")
     print(f"   Config:    {CONFIG_PATH}")

@@ -14,17 +14,13 @@ async function loadConfig() {
 
 // ── Theme — ładuje z config, zapisuje z powrotem ───────
 function applyTheme(theme, darkMode) {
-  // CSS
   const link = document.getElementById('theme-css');
-  if (link) link.href = `${theme}.css`;
-  // dark/light
+  if (link) link.href = `theme-${theme}.css`;
   document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
-  // ikona przełącznika
   const icon = document.getElementById('theme-icon');
   if (icon) icon.textContent = darkMode ? '🌙' : '☀️';
   const lbl = document.getElementById('theme-label');
   if (lbl) lbl.textContent = darkMode ? 'Dark' : 'Light';
-  // przełącznik stylu v3/v4
   document.querySelectorAll('.style-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.style === theme);
   });
@@ -55,7 +51,6 @@ async function switchStyle(theme) {
     });
   } catch(e) { console.warn('[theme] Zapis theme nieudany:', e.message); }
 }
-
 // ── Theme ──────────────────────────────────────────────
 function toggleTheme() {
   const html = document.documentElement;
@@ -311,15 +306,26 @@ function update() {
   document.getElementById('preview-output').textContent  = buildMarkup(v);
 }
 
-// ── Build markup — fully optional sections ─────────────
+// ── Build markup — pełny (podgląd + zapis do pliku) ────
+// zawiera h1 z summary na górze
 function buildMarkup(v) {
+  return _buildLines(v, true).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// ── Build markup — do kopiowania (bez h1 summary) ──────
+function buildMarkupForCopy(v) {
+  return _buildLines(v, false).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function _buildLines(v, includeSummaryH1) {
   const st  = v.severity ? `[${v.severity.split(' ')[0]}]` : '[S?]';
   const mt  = v.module.length ? v.module.map(m => `[${m}]`).join('') : '[Moduł]';
   const ds  = v.description ? v.description.slice(0,50)+(v.description.length>50?'…':'') : 'Opis...';
   const L   = [];
 
-  // h1 always (it's the ticket title line)
-  L.push(`h1. ${st} [${mt}] ${ds}`, '');
+  if (includeSummaryH1) {
+    L.push(`h1. ${st}${mt} ${ds}`, '');
+  }
 
   // Description
   if (include('description', v.description)) {
@@ -390,7 +396,7 @@ function buildMarkup(v) {
     }
   }
 
-  return L.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  return L;
 }
 
 // ── wrapCode ──────────────────────────────────────────
@@ -463,8 +469,15 @@ function trackSelection(id) {
 }
 
 // ── Copy / Save ────────────────────────────────────────
-async function copyToClipboard() { await _copy(document.getElementById('preview-output').textContent, 'copy-btn', '✓ Markup skopiowany'); }
-async function copySummary()     { await _copy(document.getElementById('summary-preview').textContent, 'copy-summary-btn', '✓ Summary skopiowane'); }
+async function copyToClipboard() {
+  // kopiuj markup BEZ h1 summary
+  const v      = getValues();
+  const markup = buildMarkupForCopy(v);
+  await _copy(markup, 'copy-btn', '✓ Markup skopiowany (bez summary)');
+}
+async function copySummary() {
+  await _copy(document.getElementById('summary-preview').textContent, 'copy-summary-btn', '✓ Summary skopiowane');
+}
 async function _copy(text, btnId, msg) {
   const btn = document.getElementById(btnId);
   try {
@@ -478,18 +491,18 @@ async function _copy(text, btnId, msg) {
 
 async function saveToFile() {
   const proxyOnline = document.getElementById('proxy-dot').classList.contains('online');
-  if (!proxyOnline) { showToast('✗ Proxy offline — uruchom proxy.py', 'error'); return; }
-  const btn  = document.getElementById('save-btn');
-  const info = document.getElementById('save-info');
+  if (!proxyOnline) { showToast('✗ Serwer offline — uruchom jira_bug_reporter.py', 'error'); return; }
+  const btn     = document.getElementById('save-btn');
+  const info    = document.getElementById('save-info');
   const origHtml = btn.innerHTML;
   btn.classList.add('saving'); btn.textContent = '…';
+  // zapis zawiera PEŁNY markup (z h1 summary)
+  const fullMarkup = document.getElementById('preview-output').textContent;
+  const summary    = document.getElementById('summary-preview').textContent;
   try {
-    const r = await fetch(`${PROXY_BASE}/save-report`, {
+    const r = await fetch('/save-report', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        summary: document.getElementById('summary-preview').textContent,
-        markup:  document.getElementById('preview-output').textContent,
-      }),
+      body: JSON.stringify({ summary, markup: fullMarkup }),
     });
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
