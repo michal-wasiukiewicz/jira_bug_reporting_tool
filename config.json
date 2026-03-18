@@ -3,7 +3,7 @@
     "host": "localhost",
     "port": 5000
   },
-  "version": "5.0",
+  "version": "5.1",
   "theme": "bugreporter",
   "dark_mode": true,
   "ssl_verify": true,
@@ -13,13 +13,17 @@
       "id": "app1",
       "name": "Portal Klienta",
       "modules": ["Logowanie", "Dashboard", "Płatności", "Raporty", "Ustawienia"],
-      "api_url": "http://your-internal-api/app1/version"
+      "api_url": "http://your-internal-api/app1/version",
+      "api_headers": {}
     },
     {
       "id": "app2",
       "name": "Panel Admina",
       "modules": ["Użytkownicy", "Role i uprawnienia", "Logi systemowe", "Konfiguracja"],
-      "api_url": "http://your-internal-api/app2/version"
+      "api_url": "http://your-internal-api/app2/version",
+      "api_headers": {
+        "user": "qa-tester"
+      }
     },
     {
       "id": "app3",

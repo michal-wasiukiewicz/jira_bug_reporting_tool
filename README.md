@@ -211,6 +211,29 @@ Skrypty startowe: sprawdzają czy port jest wolny, uruchamiają serwer w tle, za
 
 Zmiany w `config.json` są widoczne natychmiast — nie trzeba restartować serwera.
 
+### Nagłówki HTTP per aplikacja (`api_headers`)
+
+Jeśli API wymaga dodatkowych nagłówków (np. token uwierzytelniający, identyfikator użytkownika), dodaj pole `api_headers` do wybranej aplikacji:
+
+```json
+{
+  "id": "app1",
+  "name": "Portal Klienta",
+  "api_url": "https://api.example.com/version",
+  "api_headers": {
+    "user": "qa-tester",
+    "X-Api-Key": "twoj-token",
+    "Authorization": "Bearer eyJ..."
+  }
+}
+```
+
+- Pole `api_headers` jest **opcjonalne** — brak pola lub puste `{}` oznacza brak dodatkowych nagłówków
+- Można dodać dowolną liczbę nagłówków — każdy klucz to nazwa nagłówka, wartość to jego treść
+- Nagłówki są per-aplikacja — każda aplikacja może mieć inne
+- Nagłówek `Accept: application/json` jest dodawany automatycznie
+- Przy wywołaniu API w logach serwera zobaczysz listę użytych custom nagłówków (bez wartości dla bezpieczeństwa)
+
 ---
 
 ## Funkcje
@@ -266,7 +289,8 @@ Obsługiwane aliasy: `version`, `environment`, `app_version`, `git_branch`.
 - Przycisk „Kopiuj Markup" → **„Markup"**
 - Przycisk „Zapisz" → **„Zapisz plik"**
 - Skrypty startowe przeniesione do podfolderu `scripts/`
-- Obsługa błędu SSL (`certificate_verify_failed`) — nowe pole `"ssl_verify": false` w `config.json` pozwala pominąć weryfikację certyfikatu dla środowisk z self-signed SSL
+- Obsługa błędu SSL (`certificate_verify_failed`) — nowe pole `"ssl_verify": false` w `config.json`
+- **Custom nagłówki HTTP per aplikacja** — pole `api_headers` w definicji aplikacji pozwala dodać dowolne nagłówki do wywołań API (np. `user`, `X-Api-Key`, `Authorization`)
 
 ### v5.0
 - Aplikacja działa wyłącznie jako serwer lokalny (`python jira_bug_reporter.py` → `http://localhost:5000`) — jeden plik HTML, zero problemów z CORS i `file://`

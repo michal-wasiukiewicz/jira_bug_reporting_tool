@@ -91,23 +91,34 @@ def set_dark_mode():
 # ── API proxy ──────────────────────────────────────────────────────────────────
 @app.route("/api/version/<app_id>", methods=["GET"])
 def get_version(app_id):
-    cfg     = load_config()
-    app_map = {a["id"]: a["api_url"] for a in cfg["apps"]}
+    cfg      = load_config()
+    app_list = cfg["apps"]
+    app_def  = next((a for a in app_list if a["id"] == app_id), None)
 
-    if app_id not in app_map:
-        return jsonify({"error": f"Nieznana aplikacja: '{app_id}'. Dostępne: {list(app_map)}"}), 404
+    if not app_def:
+        known = [a["id"] for a in app_list]
+        return jsonify({"error": f"Nieznana aplikacja: '{app_id}'. Dostępne: {known}"}), 404
 
-    url        = app_map[app_id]
-    ssl_verify = cfg.get("ssl_verify", True)   # domyślnie weryfikuj SSL
+    url        = app_def["api_url"]
+    ssl_verify = cfg.get("ssl_verify", True)
+
+    # Nagłówki — bazowe + opcjonalne per-aplikacja z pola api_headers
+    headers = {"Accept": "application/json"}
+    custom_headers = app_def.get("api_headers") or {}
+    if isinstance(custom_headers, dict):
+        headers.update(custom_headers)
 
     if not ssl_verify:
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         print(f"[proxy] WARN: ssl_verify=false — certyfikat SSL nie jest weryfikowany")
 
-    print(f"[proxy] GET {url}  (ssl_verify={ssl_verify})")
+    header_log = {k: v for k, v in headers.items() if k != "Accept"}
+    print(f"[proxy] GET {url}  ssl={ssl_verify}"
+          + (f"  headers={header_log}" if header_log else ""))
+
     try:
-        r = req_lib.get(url, timeout=5, verify=ssl_verify)
+        r = req_lib.get(url, headers=headers, timeout=5, verify=ssl_verify)
         r.raise_for_status()
         d = r.json()
         result = {
@@ -195,7 +206,9 @@ if __name__ == "__main__":
     print(f"   Raporty:   {get_reports_dir(cfg)}")
     print(f"\n   Aplikacje:")
     for a in cfg["apps"]:
-        print(f"     [{a['id']}] {a['name']}")
+        headers = a.get("api_headers") or {}
+        header_str = f"  nagłówki: {list(headers.keys())}" if headers else ""
+        print(f"     [{a['id']}] {a['name']}{header_str}")
         print(f"             → {a['api_url']}")
     print(f"\n   Zatrzymaj: Ctrl+C\n")
     app.run(host=host, port=port, debug=False)
