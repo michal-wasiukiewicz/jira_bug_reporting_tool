@@ -29,7 +29,7 @@ function applyTheme(theme, darkMode) {
 async function toggleTheme() {
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
   const newDark = !isDark;
-  applyTheme(CONFIG.theme || 'v4', newDark);
+  applyTheme(CONFIG.theme || 'bugreporter', newDark);
   try {
     await fetch('/config/dark_mode', {
       method: 'POST',
@@ -51,28 +51,6 @@ async function switchStyle(theme) {
     });
   } catch(e) { console.warn('[theme] Zapis theme nieudany:', e.message); }
 }
-// ── Theme ──────────────────────────────────────────────
-function toggleTheme() {
-  const html = document.documentElement;
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  const icon = document.getElementById('theme-icon');
-  if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀️';
-  const lbl = document.getElementById('theme-label');
-  if (lbl) lbl.textContent = next === 'dark' ? 'Dark' : 'Light';
-  localStorage.setItem('jbf-theme', next);
-}
-(function applyStoredTheme() {
-  const t = localStorage.getItem('jbf-theme');
-  if (!t) return;
-  document.documentElement.setAttribute('data-theme', t);
-  document.addEventListener('DOMContentLoaded', () => {
-    const icon = document.getElementById('theme-icon');
-    if (icon) icon.textContent = t === 'dark' ? '🌙' : '☀️';
-    const lbl = document.getElementById('theme-label');
-    if (lbl) lbl.textContent = t === 'dark' ? 'Dark' : 'Light';
-  });
-})();
 
 // ── Accordion (v4 only) ───────────────────────────────
 function toggleAcc(id) {
@@ -552,7 +530,7 @@ function showToast(msg, type = 'success') {
 // ── Init ───────────────────────────────────────────────
 async function init() {
   await loadConfig();
-  applyTheme(CONFIG.theme || 'v4', CONFIG.dark_mode !== false);
+  applyTheme(CONFIG.theme || 'bugreporter', CONFIG.dark_mode !== false);
   populateSelects();
   checkProxy();
   ['actual','testdata'].forEach(id => {
