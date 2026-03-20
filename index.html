@@ -42,6 +42,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       Zapisz plik
     </button>
+    <button class="tb-action reset-form-btn" onclick="showResetModal('form')" title="Wyczyść cały formularz">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+      Reset form
+    </button>
     <div class="style-switcher">
       <button class="style-btn" data-style="basic" onclick="switchStyle('basic')" title="Styl industrialny">Basic</button>
       <button class="style-btn active" data-style="bugreporter" onclick="switchStyle('bugreporter')" title="Styl editorial">Bug Reporter</button>
@@ -130,11 +134,12 @@
           </div>
         </div>
         <div class="api-row">
-          <div class="field-row" style="flex:1">
-            <div class="field"><div class="field-label">Wersja (ver)</div><input type="text" id="ver" placeholder="1.4.2" oninput="update()"/></div>
+          <div class="field-row" style="flex:0 0 130px;min-width:0">
+            <div class="field"><div class="field-label">Wersja (ver)</div><input type="text" id="ver" placeholder="1.4.2" oninput="update()" style="width:100%"/></div>
             <button class="force-btn" data-state="empty" data-field-id="ver" title="Dołącz mimo braku" onclick="toggleForce('ver',this)">·</button>
           </div>
           <button class="btn-api" id="fetch-btn" onclick="fetchVersion()">⟳ API</button>
+          <button class="btn-api btn-reset-env" onclick="showResetModal('env')" title="Wyczyść pola środowiska">↺ Env</button>
         </div>
         <div class="g3">
           <div class="field-row">
@@ -280,9 +285,72 @@
   color: var(--warn) !important;
   background: var(--warn-dim) !important;
 }
+/* reset buttons */
+.reset-form-btn:hover {
+  border-color: var(--warn, #e05250) !important;
+  color: var(--warn, #e05250) !important;
+  background: rgba(224,82,80,.1) !important;
+}
+.btn-reset-env:hover {
+  border-color: var(--warn, #e05250) !important;
+  color: var(--warn, #e05250) !important;
+}
+/* modal overlay */
+@keyframes _modal-in {
+  from { transform: scale(.93); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+#jbf-modal {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+#jbf-modal.open { display: flex; }
+#jbf-modal-box {
+  background: var(--card, #161923);
+  border: 1px solid var(--border, #252a3a);
+  border-radius: 12px; padding: 28px 32px;
+  min-width: 300px; max-width: 400px; width: 90%;
+  box-shadow: 0 24px 64px rgba(0,0,0,.7);
+  animation: _modal-in .2s cubic-bezier(.175,.885,.32,1.275);
+}
+#jbf-modal-title {
+  font-size: 16px; font-weight: 700;
+  color: var(--text, #dde2f0); margin-bottom: 8px;
+}
+#jbf-modal-desc {
+  font-size: 13px; line-height: 1.6;
+  color: var(--text2, #8892a8); margin-bottom: 24px;
+}
+.jbf-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.jbf-btn-cancel {
+  background: var(--card2, #1c2030);
+  border: 1px solid var(--border, #252a3a); border-radius: 7px;
+  color: var(--text2, #8892a8); font-family: inherit;
+  font-size: 12px; font-weight: 600; padding: 8px 18px; cursor: pointer; transition: .15s;
+}
+.jbf-btn-cancel:hover { color: var(--text, #dde2f0); }
+.jbf-btn-confirm {
+  background: #e05250; border: none; border-radius: 7px;
+  color: #fff; font-family: inherit; font-size: 12px; font-weight: 700;
+  padding: 8px 20px; cursor: pointer; transition: opacity .15s;
+}
+.jbf-btn-confirm:hover { opacity: .85; }
 </style>
 
+<!-- ══ MODAL ══ -->
+<div id="jbf-modal" role="dialog" aria-modal="true">
+  <div id="jbf-modal-box">
+    <div id="jbf-modal-title">Wyczyść formularz</div>
+    <div id="jbf-modal-desc">Wszystkie pola zostaną wyczyszczone. Operacji nie można cofnąć.</div>
+    <div class="jbf-modal-actions">
+      <button class="jbf-btn-cancel" onclick="closeResetModal()">Anuluj</button>
+      <button class="jbf-btn-confirm" id="jbf-modal-confirm">Tak, wyczyść wszystko</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 <script src="app.js"></script>
-<script>init();</script>
 </body>
 </html>

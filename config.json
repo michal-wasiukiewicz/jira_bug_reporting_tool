@@ -5,29 +5,40 @@
   },
   "version": "5.1",
   "theme": "bugreporter",
-  "dark_mode": true,
+  "dark_mode": false,
   "ssl_verify": true,
   "reports_dir": "",
   "security": {
-    "api_rate_limit":       5,
-    "api_rate_window_sec":  60,
-    "save_rate_limit":      10,
+    "api_rate_limit": 5,
+    "api_rate_window_sec": 60,
+    "save_rate_limit": 10,
     "save_rate_window_sec": 60,
     "cb_failure_threshold": 3,
-    "cb_recovery_sec":      30
+    "cb_recovery_sec": 30
   },
   "apps": [
     {
       "id": "app1",
       "name": "Portal Klienta",
-      "modules": ["Logowanie", "Dashboard", "Płatności", "Raporty", "Ustawienia"],
+      "modules": [
+        "Logowanie",
+        "Dashboard",
+        "Płatności",
+        "Raporty",
+        "Ustawienia"
+      ],
       "api_url": "http://your-internal-api/app1/version",
       "api_headers": {}
     },
     {
       "id": "app2",
       "name": "Panel Admina",
-      "modules": ["Użytkownicy", "Role i uprawnienia", "Logi systemowe", "Konfiguracja"],
+      "modules": [
+        "Użytkownicy",
+        "Role i uprawnienia",
+        "Logi systemowe",
+        "Konfiguracja"
+      ],
       "api_url": "http://your-internal-api/app2/version",
       "api_headers": {
         "user": "qa-tester"
@@ -36,14 +47,35 @@
     {
       "id": "app3",
       "name": "Aplikacja Mobilna",
-      "modules": ["Onboarding", "Główny ekran", "Powiadomienia", "Profil"],
+      "modules": [
+        "Onboarding",
+        "Główny ekran",
+        "Powiadomienia",
+        "Profil"
+      ],
       "api_url": "http://your-internal-api/app3/version"
     }
   ],
   "defaults": {
     "browser_os": "Chrome / Windows 11",
-    "severity_options": ["S1 - Blocker", "S2 - Critical", "S3 - Major", "S4 - Minor", "S5 - Trivial"],
-    "repeatability_options": ["100%", "Często", "Sporadycznie", "Raz"],
-    "impact_options": ["Krytyczny", "Wysoki", "Średni", "Niski"]
+    "severity_options": [
+      "S1 - Blocker",
+      "S2 - Critical",
+      "S3 - Major",
+      "S4 - Minor",
+      "S5 - Trivial"
+    ],
+    "repeatability_options": [
+      "100%",
+      "Często",
+      "Sporadycznie",
+      "Raz"
+    ],
+    "impact_options": [
+      "Krytyczny",
+      "Wysoki",
+      "Średni",
+      "Niski"
+    ]
   }
 }

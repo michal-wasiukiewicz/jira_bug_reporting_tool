@@ -605,6 +605,80 @@ function showToast(msg, type = 'success') {
   _toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ── Reset modal ────────────────────────────────────────
+let _resetMode = 'form';
+
+function showResetModal(mode) {
+  _resetMode = mode;
+  const modal   = document.getElementById('jbf-modal');
+  const title   = document.getElementById('jbf-modal-title');
+  const desc    = document.getElementById('jbf-modal-desc');
+  const confirm = document.getElementById('jbf-modal-confirm');
+
+  if (mode === 'env') {
+    title.textContent   = 'Wyczyść środowisko';
+    desc.textContent    = 'Pola wersji, brancha, env, app ver i przeglądarki zostaną wyczyszczone.';
+    confirm.textContent = 'Tak, wyczyść Env';
+  } else {
+    title.textContent   = 'Wyczyść formularz';
+    desc.textContent    = 'Wszystkie pola zostaną wyczyszczone. Operacji nie można cofnąć.';
+    confirm.textContent = 'Tak, wyczyść wszystko';
+  }
+
+  confirm.onclick = () => { closeResetModal(); _resetMode === 'env' ? resetEnv() : resetForm(); };
+  modal.classList.add('open');
+  modal.onclick = (e) => { if (e.target === modal) closeResetModal(); };
+  document.addEventListener('keydown', _modalEsc);
+}
+
+function closeResetModal() {
+  document.getElementById('jbf-modal').classList.remove('open');
+  document.removeEventListener('keydown', _modalEsc);
+}
+
+function _modalEsc(e) { if (e.key === 'Escape') closeResetModal(); }
+
+function resetEnv() {
+  ['ver', 'branch', 'env', 'appVer'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const bos = document.getElementById('browser-os');
+  if (bos) bos.value = CONFIG?.defaults?.browser_os || '';
+  const fb = document.getElementById('api-feedback');
+  if (fb) { fb.textContent = ''; fb.className = 'api-fb'; }
+  update();
+  showToast('↺ Środowisko wyczyszczone', 'success');
+}
+
+function resetForm() {
+  ['description', 'ver', 'branch', 'env', 'appVer', 'steps', 'actual', 'expected', 'testdata'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const bos = document.getElementById('browser-os');
+  if (bos) bos.value = CONFIG?.defaults?.browser_os || '';
+  ['severity', 'repeatability', 'impact', 'app-select'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  msSelected = [];
+  msRenderTrigger();
+  msRenderDropdown();
+  ['has-screenshot', 'has-logs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+  excludedFields.clear();
+  forcedFields.clear();
+  const fb = document.getElementById('api-feedback');
+  if (fb) { fb.textContent = ''; fb.className = 'api-fb'; }
+  const si = document.getElementById('save-info');
+  if (si) si.style.display = 'none';
+  update();
+  showToast('↺ Formularz wyczyszczony', 'success');
+}
+
 // ── Init ───────────────────────────────────────────────
 async function init() {
   await loadConfig();
@@ -617,4 +691,18 @@ async function init() {
     ta.addEventListener('mouseup', () => trackSelection(id));
     ta.addEventListener('keyup',   () => trackSelection(id));
   });
+
+  // ── Guard: ostrzeżenie przed odświeżeniem / zamknięciem ──
+  window.addEventListener('beforeunload', (e) => {
+    const textFields = ['description','ver','branch','env','appVer','steps','actual','expected','testdata'];
+    const hasText     = textFields.some(id => { const el = document.getElementById(id); return el && el.value.trim() !== ''; });
+    const hasChecked  = document.getElementById('has-screenshot')?.checked || document.getElementById('has-logs')?.checked;
+    const hasSeverity = document.getElementById('severity')?.value !== '';
+    if (hasText || hasChecked || hasSeverity) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
 }
+
+init();
